@@ -130,6 +130,16 @@ Checkboxes reflect actual repo state.
 - [x] **Batch**: load an ID list from a file.
 - [x] **Replication logs** (`log.ts`): per-comparison + bulk provenance + methods
       text, so analyses can be reproduced.
+- [x] **Side-by-side compare** two saved comparisons (deltas + overlaid deviation).
+- [x] **Configurable thresholds** (`settings.tsx`) across scatter/sheet/summary.
+- [x] **PAE heatmap** (`engine/pae.ts`, `PaePanel`) for AlphaFold entries.
+- [x] **Divergent-region** breakdown (`engine/analysis.divergentRegions`).
+- [x] **Re-run** a database comparison.
+- [x] **Cross-numbering uploads**: author / UniProt / **sequence alignment**
+      (`engine/seqalign.ts`, Needleman–Wunsch).
+- [x] **Shareable permalinks** (`permalink.ts`, `#compare=…`).
+- [x] **Batch file import** with column picker (`batch/csvColumns.ts`) + per-batch
+      Excel export.
 
 ## Toolchain follow-ups
 

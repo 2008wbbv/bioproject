@@ -10,6 +10,8 @@ import type { WorkspaceEntry } from "../workspace/types.ts";
 import { parseIdList } from "./parseIds.ts";
 import { runBatch, DEFAULT_CONCURRENCY, type BatchItem } from "./runBatch.ts";
 import { Distributions } from "../charts/Distributions.tsx";
+import { parseDelimited, extractColumn, guessIdColumn, type DelimitedTable } from "./csvColumns.ts";
+import { exportEntriesXlsx } from "../workspace/export.ts";
 
 const PLACEHOLDER = `One per line, or comma-separated. e.g.
 P04637
@@ -21,6 +23,29 @@ export function BatchView({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
   const [text, setText] = useState("");
   const [items, setItems] = useState<BatchItem[]>([]);
   const [running, setRunning] = useState(false);
+  const [table, setTable] = useState<DelimitedTable | null>(null);
+
+  function loadFile(content: string) {
+    const t = parseDelimited(content);
+    if (t.headers.length > 1) {
+      // Multi-column file: let the user pick the ID column.
+      setTable(t);
+      const col = guessIdColumn(t);
+      setText((prev) => (prev ? prev + "\n" : "") + extractColumn(t, col).join("\n"));
+    } else {
+      setTable(null);
+      setText((prev) => (prev ? prev + "\n" : "") + content);
+    }
+  }
+
+  function pickColumn(col: number) {
+    if (table) setText(extractColumn(table, col).join("\n"));
+  }
+
+  const doneEntries = useMemo(
+    () => items.filter((i) => i.status === "done" && i.entry).map((i) => i.entry!),
+    [items],
+  );
 
   const ids = useMemo(() => parseIdList(text), [text]);
   const done = items.filter((i) => i.status === "done").length;
@@ -71,12 +96,22 @@ export function BatchView({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
             disabled={running}
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) void f.text().then((t) => setText((prev) => (prev ? prev + "\n" : "") + t));
+              if (f) void f.text().then(loadFile);
               e.target.value = "";
             }}
           />
-          Load IDs from a file (.txt/.csv)
+          Load IDs from a file (.txt/.csv/.tsv)
         </label>
+        {table && table.headers.length > 1 && (
+          <label className="align-by" style={{ marginLeft: "0.75rem" }}>
+            ID column
+            <select defaultValue={guessIdColumn(table)} onChange={(e) => pickColumn(Number(e.target.value))}>
+              {table.headers.map((h, i) => (
+                <option key={i} value={i}>{h}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       <div className="batch-controls">
@@ -87,6 +122,11 @@ export function BatchView({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
           <span className="muted">
             {done} done · {errored} failed · {items.length - finished} left
           </span>
+        )}
+        {doneEntries.length > 0 && (
+          <button onClick={() => exportEntriesXlsx(doneEntries, "batch-results")} title="Export this batch as an Excel workbook">
+            Export results
+          </button>
         )}
       </div>
 

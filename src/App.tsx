@@ -3,7 +3,7 @@
  * it, browse past comparisons in a dashboard, view the per-residue data in a sheet,
  * and export to Excel/CSV. Persistence is IndexedDB (src/workspace).
  */
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { runComparison, runCustomComparison, type AlignBy, type PipelineResult, type UploadedFile } from "./api/pipeline.ts";
 import type { RankedStructure } from "./api/pdbe.ts";
 import { ApiError } from "./api/errors.ts";
@@ -29,6 +29,7 @@ import { TagEditor } from "./components/TagEditor.tsx";
 import { SettingsPanel } from "./components/SettingsPanel.tsx";
 import { CompareTwo } from "./components/CompareTwo.tsx";
 import { useTheme } from "./useTheme.ts";
+import { parseCompareHash, compareUrl } from "./permalink.ts";
 import "./styles.css";
 
 /** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
@@ -116,6 +117,17 @@ export function App() {
     setStatus("done");
     setView("compare");
   }
+
+  // Open a comparison from a shared permalink (#compare=…) on first load.
+  useEffect(() => {
+    const link = parseCompareHash(location.hash);
+    if (link) {
+      setQuery(link.query);
+      setCompareMode("database");
+      void run(link.query, link.pdbId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const liveEntry = active ? ws.entries.find((e) => e.id === active.id) ?? null : null;
 
@@ -319,6 +331,18 @@ function Results({
             {entry.source === "database" && (
               <button onClick={() => onCompareAccession(entry.query || entry.uniprot)} title="Re-fetch and recompute">
                 Re-run
+              </button>
+            )}
+            {entry.source === "database" && (
+              <button
+                title="Copy a shareable link to this comparison"
+                onClick={() => {
+                  const url = compareUrl({ query: entry.query || entry.uniprot, pdbId: entry.pdbId });
+                  void navigator.clipboard?.writeText(url);
+                  location.hash = url.split("#")[1] ?? "";
+                }}
+              >
+                Copy link
               </button>
             )}
             <button onClick={() => exportEntryXlsx(entry)}>Export Excel</button>
