@@ -30,7 +30,18 @@ import { SettingsPanel } from "./components/SettingsPanel.tsx";
 import { CompareTwo } from "./components/CompareTwo.tsx";
 import { useTheme } from "./useTheme.ts";
 import { parseCompareHash, compareUrl } from "./permalink.ts";
+import { Sidebar } from "./ui/Sidebar.tsx";
+import { TopBar } from "./ui/TopBar.tsx";
+import { CommandPalette, type Command } from "./ui/CommandPalette.tsx";
+import { useToast } from "./ui/toast.tsx";
 import "./styles.css";
+
+const BREADCRUMBS: Record<string, string> = {
+  dashboard: "Dashboard",
+  compare: "Compare",
+  batch: "Batch",
+  compare2: "Compare two",
+};
 
 /** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
 function structuresOf(id: string, data: PipelineResult): StoredStructures {
@@ -76,6 +87,23 @@ export function App() {
   const [error, setError] = useState("");
   const [active, setActive] = useState<Active | null>(null);
   const [pair, setPair] = useState<[WorkspaceEntry, WorkspaceEntry] | null>(null);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem("openfoldui-sidebar") === "collapsed");
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [dashTag, setDashTag] = useState<string | null>(null);
+
+  function toggleSidebar() {
+    setCollapsed((c) => {
+      localStorage.setItem("openfoldui-sidebar", c ? "open" : "collapsed");
+      return !c;
+    });
+  }
+
+  function startNewComparison() {
+    setActive(null);
+    setStatus("idle");
+    setCompareMode("database");
+    setView("compare");
+  }
 
   async function run(q: string, pdbId?: string) {
     const trimmed = q.trim();
@@ -129,30 +157,48 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ⌘K / Ctrl-K opens the command palette anywhere.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const commands: Command[] = useMemo(
+    () => [
+      { id: "new", label: "New comparison", hint: "from database", run: startNewComparison },
+      { id: "upload", label: "Upload your own files", hint: "compare local structures", run: () => { setCompareMode("upload"); setView("compare"); } },
+      { id: "dashboard", label: "Go to Dashboard", run: () => setView("dashboard") },
+      { id: "batch", label: "Go to Batch", run: () => setView("batch") },
+      { id: "theme", label: "Toggle dark mode", run: () => setTheme(theme === "dark" ? "light" : "dark") },
+    ],
+    [theme, setTheme],
+  );
+
   const liveEntry = active ? ws.entries.find((e) => e.id === active.id) ?? null : null;
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1>OpenFoldUI</h1>
-          <p className="tagline">
-            Compare a predicted structure against the real one — and see where the model was{" "}
-            <em>confidently wrong</em>. AlphaFold-DB or your own files.
-          </p>
-        </div>
-        <div className="header-right">
-          <nav className="nav">
-            <button className={view === "dashboard" ? "on" : ""} onClick={() => setView("dashboard")}>
-              Dashboard{ws.entries.length ? ` (${ws.entries.length})` : ""}
-            </button>
-            <button className={view === "compare" ? "on" : ""} onClick={() => setView("compare")}>
-              Compare
-            </button>
-            <button className={view === "batch" ? "on" : ""} onClick={() => setView("batch")}>
-              Batch
-            </button>
-          </nav>
+    <div className={`shell ${collapsed ? "collapsed" : ""}`}>
+      <Sidebar
+        view={view}
+        entries={ws.entries}
+        collapsed={collapsed}
+        onNavigate={setView}
+        onNewComparison={startNewComparison}
+        onOpenEntry={openEntry}
+        onSelectTag={(t) => { setDashTag(t); setView("dashboard"); }}
+      />
+      <div className="main">
+        <TopBar
+          breadcrumb={BREADCRUMBS[view] ?? "Dashboard"}
+          onToggleSidebar={toggleSidebar}
+          onOpenPalette={() => setPaletteOpen(true)}
+        >
           <SettingsPanel />
           <button
             className="theme-toggle"
@@ -161,9 +207,9 @@ export function App() {
           >
             {theme === "dark" ? "☀" : "☾"}
           </button>
-        </div>
-      </header>
+        </TopBar>
 
+        <main className="content">
       {view === "compare" && (
         <>
           <div className="mode-tabs">
@@ -234,6 +280,8 @@ export function App() {
           onQuickCompare={(q) => { setQuery(q); setCompareMode("database"); void run(q); }}
           onUpload={() => { setCompareMode("upload"); setView("compare"); }}
           onCompareTwo={(a, b) => { setPair([a, b]); setView("compare2"); }}
+          externalTag={dashTag}
+          onTagConsumed={() => setDashTag(null)}
           examples={EXAMPLES}
         />
       )}
@@ -244,11 +292,21 @@ export function App() {
 
       {view === "batch" && <BatchView ws={ws} onOpen={openEntry} />}
 
-      <footer className="app-footer">
-        <span className="muted">
-          OpenFoldUI · native TypeScript engine · client-only · metrics computed in-browser · saved locally (IndexedDB).
-        </span>
-      </footer>
+          <footer className="app-footer">
+            <span className="muted">
+              OpenFoldUI · native TypeScript engine · client-only · metrics in-browser · saved locally (IndexedDB).
+            </span>
+          </footer>
+        </main>
+      </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        commands={commands}
+        entries={ws.entries}
+        onOpenEntry={openEntry}
+      />
     </div>
   );
 }
@@ -272,6 +330,7 @@ function Results({
   onTags: (tags: string[]) => void;
   onCompareAccession: (accession: string) => void;
 }) {
+  const { toast } = useToast();
   const [mode, setMode] = useState<ColorMode>("deviation");
   const [showSheet, setShowSheet] = useState(false);
 
@@ -340,6 +399,7 @@ function Results({
                   const url = compareUrl({ query: entry.query || entry.uniprot, pdbId: entry.pdbId });
                   void navigator.clipboard?.writeText(url);
                   location.hash = url.split("#")[1] ?? "";
+                  toast("Shareable link copied to clipboard.", "success");
                 }}
               >
                 Copy link

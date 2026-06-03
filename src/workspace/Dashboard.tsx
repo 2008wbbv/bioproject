@@ -4,9 +4,10 @@
  * favorites, a tag filter, and the full sortable/filterable table with bulk export,
  * JSON backup/import, and replication-log export (SPEC §9-10).
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { WorkspaceEntry } from "./types.ts";
 import type { Workspace } from "./useWorkspace.ts";
+import { useToast } from "../ui/toast.tsx";
 import { workspaceStats, allTags } from "./stats.ts";
 import {
   exportEntriesXlsx,
@@ -25,6 +26,8 @@ export function Dashboard({
   onQuickCompare,
   onUpload,
   onCompareTwo,
+  externalTag,
+  onTagConsumed,
   examples,
 }: {
   ws: Workspace;
@@ -32,8 +35,11 @@ export function Dashboard({
   onQuickCompare: (query: string) => void;
   onUpload: () => void;
   onCompareTwo: (a: WorkspaceEntry, b: WorkspaceEntry) => void;
+  externalTag?: string | null;
+  onTagConsumed?: () => void;
   examples: Array<{ label: string; query: string }>;
 }) {
+  const { toast } = useToast();
   const [selected, setSelected] = useState<string[]>([]);
   const toggleSelect = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(-2)));
@@ -44,6 +50,13 @@ export function Dashboard({
   const [asc, setAsc] = useState(false);
   const [quick, setQuick] = useState("");
   const importRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (externalTag) {
+      setTag(externalTag);
+      onTagConsumed?.();
+    }
+  }, [externalTag, onTagConsumed]);
 
   const stats = useMemo(() => workspaceStats(ws.entries), [ws.entries]);
   const tags = useMemo(() => allTags(ws.entries), [ws.entries]);
@@ -85,9 +98,9 @@ export function Dashboard({
     try {
       const entries = parseWorkspace(await file.text());
       const n = await ws.importEntries(entries);
-      alert(`Imported ${n} comparison${n === 1 ? "" : "s"}.`);
+      toast(`Imported ${n} comparison${n === 1 ? "" : "s"}.`, "success");
     } catch (e) {
-      alert(`Import failed: ${(e as Error).message}`);
+      toast(`Import failed: ${(e as Error).message}`, "error");
     }
   }
 
