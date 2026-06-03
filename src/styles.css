@@ -26,6 +26,13 @@ body {
   padding: 1.5rem 1.25rem 4rem;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
 .app-header h1 {
   margin: 0;
   font-size: 1.6rem;
@@ -33,6 +40,23 @@ body {
 .tagline {
   margin: 0.25rem 0 1.25rem;
   color: var(--muted);
+}
+.nav {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.nav button {
+  border: none;
+  background: white;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+.nav button.on {
+  background: var(--accent);
+  color: white;
 }
 
 .muted {
@@ -242,4 +266,166 @@ button.link:hover {
   .charts {
     grid-template-columns: 1fr;
   }
+}
+
+/* --- result actions, favorites, export --- */
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+.export-group {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+.export-group button,
+.dash-toolbar button {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.export-group button:hover,
+.dash-toolbar button:hover {
+  background: #f1f5f9;
+}
+button.danger,
+.link.danger {
+  color: var(--danger);
+}
+button.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #f59e0b;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 0.3rem 0 0;
+}
+button.star.big {
+  font-size: 1.3rem;
+}
+button.star:not(.on) {
+  color: #cbd5e1;
+}
+.link.strong {
+  font-weight: 600;
+}
+.small {
+  font-size: 0.78rem;
+}
+
+/* --- notes --- */
+.notes {
+  margin: 0 0 1.25rem;
+}
+.notes-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.notes textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  resize: vertical;
+}
+
+/* --- data sheet --- */
+.sheet-toggle {
+  margin-bottom: 0.75rem;
+}
+.sheet-toggle button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+.datasheet {
+  margin-bottom: 1.5rem;
+}
+.datasheet-meta {
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+}
+.datasheet-scroll {
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.datasheet table,
+.dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+.datasheet th,
+.dashboard th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.datasheet td,
+.dashboard td {
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.datasheet tr.row-wrong {
+  background: #fef2f2;
+}
+
+/* --- dashboard --- */
+.dashboard {
+  margin-top: 1.5rem;
+}
+.dash-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+.dash-toolbar input[type="search"] {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 260px;
+}
+.dash-toolbar .spacer {
+  flex: 1;
+}
+.chk {
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.dash-scroll {
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.fav-cell {
+  text-align: center;
+}
+.empty {
+  margin-top: 4rem;
+  text-align: center;
 }
