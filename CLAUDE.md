@@ -16,13 +16,15 @@ search (SPEC §11), which is isolated in `src/search/` and never a core dependen
 
 ## Architecture (one-liners)
 
-- `src/api/` — one typed module per data source (UniProt, PDBe, RCSB, AlphaFold).
-  No raw `fetch` in components. *(Phase 1, not yet built.)*
+- `src/api/` — one typed module per data source (UniProt, PDBe, RCSB, AlphaFold) +
+  `pipeline.ts` (id → `ComparisonResult`). No raw `fetch` in components. **Built.**
 - `src/engine/` — **pure, headless, fully unit-tested** comparison engine. No DOM,
   no Mol*, no network. Runs identically in Node, a Web Worker, or the main thread.
   **This is built and tested.**
-- `src/viewer/` — Mol* React wrapper, deviation/pLDDT color modes. *(Phase 2.)*
-- `src/charts/` — Observable Plot: pLDDT-vs-deviation scatter, batch distributions.
+- `src/viewer/` — Mol* React wrapper (lazy-loaded, error-boundaried),
+  deviation/pLDDT color modes via B-factor encoding. **Built.**
+- `src/charts/` — Observable Plot: pLDDT-vs-deviation scatter, per-residue deviation
+  track. **Built** (batch distributions come with Phase 4).
 - `src/cache/` — IndexedDB (`idb`): raw files + computed results. *(Phase 4.)*
 - `src/batch/` — Web Worker pool over many IDs → sortable table + CSV. *(Phase 4.)*
 - `src/search/` — Foldseek remote search, best-effort, degrades gracefully. *(Phase 5.)*
@@ -48,6 +50,9 @@ Data flow: `parse → assign UniProt numbers → align → compare`.
   RMSD, TM-score, GDT-TS, per-residue deviation, Spearman(pLDDT, deviation).
 - `ligands.ts` — maintained ignore-list of crystallization junk for apo/holo
   detection (SPEC §8).
+- `pdbTransform.ts` — pure PDB coordinate/B-factor rewriting for the viewer
+  (pre-superpose AF; encode deviation or 100−pLDDT into the B-factor column so Mol*'s
+  built-in B-factor color theme renders the heatmap; blue=good, red=bad).
 
 Key convention: **P = AlphaFold (moving), Q = experimental (reference)**; AlphaFold
 is superposed onto the experimental structure. pLDDT lives in the AlphaFold
@@ -64,13 +69,16 @@ B-factor column.
 
 ```bash
 npm install
-npm run dev         # Vite dev server (UI is a placeholder until Phase 2)
-npm test            # vitest — the engine test suite (48 tests)
+npm run dev         # Vite dev server — full app: enter a protein, see metrics/charts/3D
+npm test            # vitest — engine + api + viewer-prep suite (71 tests)
 npm run typecheck   # tsc --noEmit
-npx vite-node scripts/validate-local.ts   # real-data engine validation (needs files in /tmp/val)
+npm run build       # tsc -b && vite build (Mol* is a lazy chunk)
+npx vite-node scripts/validate.ts [UNIPROT] [PDB]   # real-data engine validation
 ```
 
 ## Status
 
-Phase 0 (CORS de-risk) and the engine core are complete and tested. See
-`BUILD_PLAN.md` for what's next.
+Phase 0 (CORS de-risk), the engine core, the API layer + pipeline, and the UI
+(charts + lazy Mol* viewer) are built and tested. Note: the Mol* viewer's visual
+render hasn't been eyeballed in a browser (built in a headless container); it is
+isolated behind an error boundary. See `BUILD_PLAN.md` for what's next.

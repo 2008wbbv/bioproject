@@ -40,25 +40,38 @@ Checkboxes reflect actual repo state.
 - Multi-fragment AF models (>2700 aa, F1/F2/...): only F1 in v1, with a notice
   (SPEC §3) — to be surfaced in the api layer.
 
-## Phase 1.5 — API layer (`src/api/`) — NEXT
+## Phase 1.5 — API layer (`src/api/`) ✅ DONE
 
-- [ ] `uniprot.ts` — name→accession search (skip if input matches the accession
-      regex); top reviewed hit; disambiguation list.
-- [ ] `pdbe.ts` — `best_structures` (rank, prefer X-ray + coverage + apo over holo),
-      and SIFTS `/mappings` (feeds the segment fallback).
-- [ ] `rcsb.ts` / structure fetch — prefer PDBe `{pdb}_updated.cif`, fall back to
-      RCSB `.cif`/`.pdb` (RCSB CDN is flaky, see Phase 0).
-- [ ] `alphafold.ts` — metadata → real file URLs (no hardcoded version) → model +
-      PAE.
-- [ ] Typed result/error per call; no raw `fetch` in components.
-- [ ] A `pipeline.ts` that wires id → result, plus best-chain selection and
-      `referenceLength` computation.
+- [x] `errors.ts` / `http.ts` — typed ApiError/NotFoundError; the single network
+      surface; multi-URL fallback helper. No raw `fetch` in components.
+- [x] `uniprot.ts` — name→accession (skips the search when the input matches the
+      accession regex); top reviewed hit; disambiguation candidates.
+- [x] `pdbe.ts` — `best_structures` re-ranked (X-ray, then coverage, then
+      resolution); SIFTS `/mappings` for the segment fallback.
+- [x] `structure.ts` — prefer PDBe `{pdb}_updated.cif` (per-atom UniProt numbers),
+      fall back to PDBe/RCSB plain `.cif` (RCSB CDN is flaky, see Phase 0).
+- [x] `alphafold.ts` — metadata → real file URLs (no hardcoded version) → model.
+- [x] `pipeline.ts` — id → result; best-chain selection; monomer `referenceLength`;
+      holo + degenerate-case warnings.
+- [x] Tests for the pure logic (accession regex, hit/structure ranking, best-chain).
 
-## Phase 2 — Viewer (`src/viewer/`)
+### Still to refine in the api layer
+- [ ] Apo-over-holo *preference* in the pick (currently only flags holo; choosing apo
+      needs fetching candidates' HETATM — SPEC §8, v1.5).
+- [ ] Multi-fragment AF models (>2700 aa): currently F1 only, no explicit notice yet.
 
-- [ ] Mol* React wrapper; load both structures; apply engine transform to superpose.
-- [ ] Deviation color mode (blue→red, Å legend) and pLDDT mode (AF palette) toggle.
-- [ ] (Fallback: NGL if Mol* becomes a time sink — do not let it block.)
+## Phase 2 — Viewer + charts ✅ DONE
+
+- [x] `charts/` — Observable Plot: pLDDT-vs-deviation scatter (with a "confidently
+      wrong" quadrant) + per-residue deviation track tinted by pLDDT.
+- [x] `viewer/MolstarViewer.tsx` — Mol* React wrapper, lazy-loaded, error-boundaried;
+      experimental (grey) + AF superposed; deviation/pLDDT color toggle via the
+      B-factor-encoding trick (`prepareModels.ts` + `engine/pdbTransform.ts`).
+- [x] `App.tsx` + `styles.css` — input, examples, metrics cards, structure-override
+      dropdown, warnings, charts, viewer.
+- [ ] **Visual QA pending:** the 3D render was not eyeballed in a browser (headless
+      build env). Verify colors/superposition look right; tune the `uncertainty`
+      palette/domain if needed. NGL remains the fallback if Mol* misbehaves.
 
 ## Phase 3 — Validation backend (`src/engine/backends/`)
 

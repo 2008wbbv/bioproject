@@ -8,8 +8,9 @@ TM-score, GDT-TS, per-residue deviation, and — the scientific payload — the
 The story it tells: where AlphaFold was *confidently wrong* — high pLDDT (the model
 was sure) but high deviation (it was off anyway).
 
-> **Status:** the pure comparison engine is built and tested (Phase 0 + 1). The UI
-> (Mol* viewer, charts, batch mode) is on the way — see [`BUILD_PLAN.md`](BUILD_PLAN.md).
+> **Status:** the engine, the API layer + pipeline, and the single-protein UI
+> (metrics, Observable Plot charts, lazy-loaded Mol* 3D overlay) are built and
+> tested. Batch mode and caching are next — see [`BUILD_PLAN.md`](BUILD_PLAN.md).
 > [`SPEC.md`](SPEC.md) is the full source of truth; [`CLAUDE.md`](CLAUDE.md) is the summary.
 
 ## Quick start
@@ -18,7 +19,18 @@ was sure) but high deviation (it was off anyway).
 npm install
 ```
 
-### Easiest way to see it work: run the engine on a real protein
+### Easiest way to run the app
+
+```bash
+npm run dev        # http://localhost:5173
+```
+
+Type a protein name or UniProt accession (e.g. `p53` or `P04637`), or click an
+example. You get the metrics, the pLDDT-vs-deviation scatter (with a "confidently
+wrong" quadrant), a per-residue deviation track, and a 3D overlay you can toggle
+between deviation and pLDDT coloring. Everything runs in the browser.
+
+### See the engine work headlessly (no browser)
 
 This fetches AlphaFold + the experimental structure for a UniProt accession and runs
 the full pipeline (parse → map UniProt numbers → align → compare), printing every
@@ -48,24 +60,16 @@ pLDDT-error Spearman: -0.5622   (confident residues deviate less)
 npm test
 ```
 
-### Run the dev server
-
-The browser UI is currently a placeholder until the viewer phase:
-
-```bash
-npm run dev        # http://localhost:5173
-```
-
 ## All commands
 
 | Command | What it does |
 |---|---|
 | `npm install` | Install dependencies |
-| `npx vite-node scripts/validate.ts [UNIPROT] [PDB]` | Real-data engine validation (easiest demo) |
-| `npm test` | Vitest engine suite (48 tests, network-free) |
+| `npm run dev` | Vite dev server — the full app |
+| `npx vite-node scripts/validate.ts [UNIPROT] [PDB]` | Headless real-data engine validation |
+| `npm test` | Vitest engine + api + viewer-prep suite (71 tests, network-free) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run dev` | Vite dev server (placeholder UI for now) |
-| `npm run build` | Production build to `dist/` |
+| `npm run build` | Production build to `dist/` (Mol* is a lazy chunk) |
 
 ## How it works
 
