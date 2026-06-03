@@ -15,6 +15,7 @@ export function Sidebar({
   onNewComparison,
   onOpenEntry,
   onSelectTag,
+  onShowShortcuts,
 }: {
   view: View;
   entries: WorkspaceEntry[];
@@ -23,6 +24,7 @@ export function Sidebar({
   onNewComparison: () => void;
   onOpenEntry: (e: WorkspaceEntry) => void;
   onSelectTag: (tag: string) => void;
+  onShowShortcuts: () => void;
 }) {
   const favorites = entries.filter((e) => e.favorite).slice(0, 8);
   const recent = [...entries].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 6);
@@ -75,6 +77,11 @@ export function Sidebar({
           </div>
         </Section>
       )}
+
+      <div className="sidebar-footer">
+        <span className="muted">{entries.length} saved · local only</span>
+        <button className="link" onClick={onShowShortcuts}>shortcuts (?)</button>
+      </div>
     </aside>
   );
 }

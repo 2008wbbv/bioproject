@@ -39,6 +39,8 @@ search (SPEC §11), which is isolated in `src/search/` and never a core dependen
   results land in the workspace. **Built.**
 - `src/engine/backends/` — `tmalign-wasm` validation backend (lazy WASM). **Built.**
 - `src/search/` — Foldseek remote search, best-effort, degrades gracefully. **Built.**
+- `src/ui/` — app shell: Notion-style `Sidebar`, `TopBar`, ⌘K `CommandPalette`
+  (+ `fuzzy.ts`), `toast` notifications, `ShortcutsHelp`. **Built.**
 
 ## The engine (the part that exists)
 

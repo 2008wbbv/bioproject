@@ -33,6 +33,7 @@ import { parseCompareHash, compareUrl } from "./permalink.ts";
 import { Sidebar } from "./ui/Sidebar.tsx";
 import { TopBar } from "./ui/TopBar.tsx";
 import { CommandPalette, type Command } from "./ui/CommandPalette.tsx";
+import { ShortcutsHelp } from "./ui/ShortcutsHelp.tsx";
 import { useToast } from "./ui/toast.tsx";
 import "./styles.css";
 
@@ -79,6 +80,7 @@ const EXAMPLES = [
 
 export function App() {
   const ws = useWorkspace();
+  const { toast } = useToast();
   const [view, setView] = useState<View>("dashboard");
   const [theme, setTheme] = useTheme();
   const [compareMode, setCompareMode] = useState<"database" | "upload">("database");
@@ -89,6 +91,7 @@ export function App() {
   const [pair, setPair] = useState<[WorkspaceEntry, WorkspaceEntry] | null>(null);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("openfoldui-sidebar") === "collapsed");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [dashTag, setDashTag] = useState<string | null>(null);
 
   function toggleSidebar() {
@@ -116,9 +119,12 @@ export function App() {
       const entry = await ws.saveResult(trimmed, data);
       setActive({ id: entry.id, structures: structuresOf(entry.id, data), alternatives: data.alternatives });
       setStatus("done");
+      toast(`${entry.proteinName} vs ${entry.pdbId}: TM ${entry.tmScore.toFixed(2)}, RMSD ${entry.rmsd.toFixed(2)} Å`, "success");
     } catch (e) {
-      setError(e instanceof ApiError ? `${e.source}: ${e.message}` : (e as Error).message);
+      const msg = e instanceof ApiError ? `${e.source}: ${e.message}` : (e as Error).message;
+      setError(msg);
       setStatus("error");
+      toast(msg, "error");
     }
   }
 
@@ -157,12 +163,34 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ⌘K / Ctrl-K opens the command palette anywhere.
+  // Global keyboard shortcuts. ⌘K works everywhere; single-key shortcuts only
+  // fire when not typing in a field.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPaletteOpen((o) => !o);
+        return;
+      }
+      const el = e.target as HTMLElement | null;
+      const typing =
+        !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "Escape") {
+        setHelpOpen(false);
+        return;
+      }
+      if (e.key === "?") setHelpOpen(true);
+      else if (e.key === "/") {
+        e.preventDefault();
+        setPaletteOpen(true);
+      } else if (e.key === "d") setView("dashboard");
+      else if (e.key === "b") setView("batch");
+      else if (e.key === "n") {
+        setActive(null);
+        setStatus("idle");
+        setCompareMode("database");
+        setView("compare");
       }
     }
     window.addEventListener("keydown", onKey);
@@ -192,6 +220,7 @@ export function App() {
         onNewComparison={startNewComparison}
         onOpenEntry={openEntry}
         onSelectTag={(t) => { setDashTag(t); setView("dashboard"); }}
+        onShowShortcuts={() => setHelpOpen(true)}
       />
       <div className="main">
         <TopBar
@@ -307,6 +336,7 @@ export function App() {
         entries={ws.entries}
         onOpenEntry={openEntry}
       />
+      <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

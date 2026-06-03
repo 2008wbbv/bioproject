@@ -140,6 +140,9 @@ Checkboxes reflect actual repo state.
 - [x] **Shareable permalinks** (`permalink.ts`, `#compare=…`).
 - [x] **Batch file import** with column picker (`batch/csvColumns.ts`) + per-batch
       Excel export.
+- [x] **App shell** (`src/ui/`): Notion-style collapsible sidebar (favorites /
+      recent / tags), top taskbar, **⌘K command palette** (`fuzzy.ts`), toast
+      notifications, keyboard shortcuts + help overlay.
 
 ## Toolchain follow-ups
 

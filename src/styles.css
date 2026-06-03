@@ -1052,3 +1052,23 @@ tr.row-selected { background: #eff6ff; }
 
 /* old single-column header no longer used; keep app-footer tidy in shell */
 .content .app-footer { margin-top: 2.5rem; }
+
+/* --- sidebar footer + shortcuts help --- */
+.sidebar-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+.shortcuts { width: min(420px, 92vw); padding: 0.5rem 0; }
+.shortcuts-head { font-weight: 600; padding: 0.4rem 1rem 0.6rem; }
+.shortcuts-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.shortcuts-table td { padding: 0.3rem 1rem; }
+.shortcuts-table td:first-child { width: 120px; }
+.shortcuts-table kbd {
+  font-family: inherit; font-size: 0.78rem; border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.05rem 0.4rem; background: var(--bg);
+}
