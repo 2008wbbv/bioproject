@@ -25,6 +25,7 @@ import { exportEntryXlsx, exportEntryCsv, exportEntryLog } from "./workspace/exp
 import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
+import { SettingsPanel } from "./components/SettingsPanel.tsx";
 import { useTheme } from "./useTheme.ts";
 import "./styles.css";
 
@@ -136,6 +137,7 @@ export function App() {
               Batch
             </button>
           </nav>
+          <SettingsPanel />
           <button
             className="theme-toggle"
             title={theme === "dark" ? "Switch to light" : "Switch to dark"}

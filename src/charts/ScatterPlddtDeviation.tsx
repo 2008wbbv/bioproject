@@ -7,11 +7,7 @@ import { useMemo } from "react";
 import * as Plot from "@observablehq/plot";
 import type { PerResidue } from "../engine/types.ts";
 import { PlotFigure } from "./PlotFigure.tsx";
-
-/** pLDDT threshold above which AlphaFold claims high confidence. */
-const CONFIDENT = 70;
-/** Deviation (Å) above which we consider the prediction meaningfully wrong. */
-const WRONG = 3;
+import { useSettings } from "../settings.tsx";
 
 export function ScatterPlddtDeviation({
   perResidue,
@@ -20,6 +16,9 @@ export function ScatterPlddtDeviation({
   perResidue: PerResidue[];
   spearman: number;
 }) {
+  const { settings } = useSettings();
+  const CONFIDENT = settings.plddtConfident;
+  const WRONG = settings.deviationWrong;
   const options = useMemo<Plot.PlotOptions>(() => {
     const maxDev = Math.max(WRONG + 1, ...perResidue.map((r) => r.deviation));
     return {
@@ -62,7 +61,7 @@ export function ScatterPlddtDeviation({
         }),
       ],
     };
-  }, [perResidue]);
+  }, [perResidue, CONFIDENT, WRONG]);
 
   return (
     <figure className="chart">

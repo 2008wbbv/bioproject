@@ -2,13 +2,16 @@
  * Lab-facing summary: pLDDT confidence bands, agreement stats, and the table labs
  * most want — residues where the model was confident but wrong.
  */
-import { plddtBands, confidentlyWrong, deviationStats } from "../engine/analysis.ts";
+import { plddtBands, confidentlyWrong, deviationStats, divergentRegions } from "../engine/analysis.ts";
 import type { PerResidue } from "../engine/types.ts";
+import { useSettings } from "../settings.tsx";
 
 export function ConfidenceSummary({ perResidue }: { perResidue: PerResidue[] }) {
+  const { settings } = useSettings();
   const bands = plddtBands(perResidue);
   const stats = deviationStats(perResidue);
-  const wrong = confidentlyWrong(perResidue, { limit: 12 });
+  const wrong = confidentlyWrong(perResidue, { plddtMin: settings.plddtConfident, devMin: settings.deviationWrong, limit: 12 });
+  const regions = divergentRegions(perResidue, { devMin: settings.deviationWrong, minLen: 3 });
   const pct = (n: number) => (bands.total ? ((n / bands.total) * 100).toFixed(0) : "0");
 
   return (
@@ -39,6 +42,36 @@ export function ConfidenceSummary({ perResidue }: { perResidue: PerResidue[] }) 
           </ul>
         </div>
       </div>
+
+      {regions.length > 0 && (
+        <>
+          <h3>Divergent regions ({regions.length})</h3>
+          <div className="datasheet-scroll" style={{ maxHeight: 200 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Region</th>
+                  <th>Length</th>
+                  <th>Mean dev (Å)</th>
+                  <th>Max dev (Å)</th>
+                  <th>Mean pLDDT</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regions.map((r) => (
+                  <tr key={`${r.start}-${r.end}`} className={r.meanPlddt >= settings.plddtConfident ? "row-wrong" : ""}>
+                    <td>{r.start}–{r.end}</td>
+                    <td>{r.length}</td>
+                    <td>{r.meanDeviation.toFixed(2)}</td>
+                    <td>{r.maxDeviation.toFixed(2)}</td>
+                    <td>{r.meanPlddt.toFixed(0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       <h3>Confidently wrong residues {wrong.length > 0 ? `(${wrong.length})` : ""}</h3>
       {wrong.length === 0 ? (

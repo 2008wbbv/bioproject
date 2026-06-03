@@ -39,6 +39,57 @@ export function confidentlyWrong(
     .slice(0, limit);
 }
 
+/** A contiguous stretch of residues where the model diverges from experiment. */
+export interface DivergentRegion {
+  start: number; // first UniProt residue
+  end: number; // last UniProt residue
+  length: number;
+  meanDeviation: number;
+  maxDeviation: number;
+  meanPlddt: number;
+}
+
+/**
+ * Find contiguous runs of residues whose deviation is ≥ devMin (a small gap between
+ * residue numbers is tolerated so a single missing residue doesn't split a region).
+ * These are the "the model misses loop 120–135" stretches a lab wants flagged.
+ */
+export function divergentRegions(
+  perResidue: PerResidue[],
+  { devMin = 3, minLen = 3, maxGap = 1 }: { devMin?: number; minLen?: number; maxGap?: number } = {},
+): DivergentRegion[] {
+  const sorted = [...perResidue].sort((a, b) => a.uniprotNum - b.uniprotNum);
+  const regions: DivergentRegion[] = [];
+  let run: PerResidue[] = [];
+
+  const flush = () => {
+    if (run.length >= minLen) {
+      const devs = run.map((r) => r.deviation);
+      regions.push({
+        start: run[0].uniprotNum,
+        end: run[run.length - 1].uniprotNum,
+        length: run.length,
+        meanDeviation: devs.reduce((a, d) => a + d, 0) / run.length,
+        maxDeviation: Math.max(...devs),
+        meanPlddt: run.reduce((a, r) => a + r.plddt, 0) / run.length,
+      });
+    }
+    run = [];
+  };
+
+  for (const r of sorted) {
+    if (r.deviation >= devMin) {
+      const prev = run[run.length - 1];
+      if (prev && r.uniprotNum - prev.uniprotNum > maxGap + 1) flush();
+      run.push(r);
+    } else {
+      flush();
+    }
+  }
+  flush();
+  return regions.sort((a, b) => b.meanDeviation - a.meanDeviation);
+}
+
 export interface DeviationStats {
   mean: number;
   median: number;

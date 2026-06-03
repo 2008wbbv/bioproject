@@ -836,3 +836,44 @@ button.star:not(.on) {
   color: var(--text);
 }
 .tags-cell { max-width: 180px; }
+
+/* --- settings popover --- */
+.settings { position: relative; display: inline-block; }
+.settings-pop {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  z-index: 50;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  width: 250px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.settings-pop h4 { margin: 0 0 0.6rem; font-size: 0.9rem; }
+.settings-pop label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.settings-pop input {
+  width: 70px;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+}
+.settings-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; }
+.settings-actions button:last-child {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}

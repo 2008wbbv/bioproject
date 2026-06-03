@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { plddtBands, confidentlyWrong, deviationStats } from "./analysis.ts";
+import { plddtBands, confidentlyWrong, deviationStats, divergentRegions } from "./analysis.ts";
 import type { PerResidue } from "./types.ts";
 
 const pr = (uniprotNum: number, plddt: number, deviation: number): PerResidue => ({ uniprotNum, plddt, deviation });
@@ -41,5 +41,31 @@ describe("deviationStats", () => {
 
   it("handles empty input", () => {
     expect(deviationStats([])).toEqual({ mean: 0, median: 0, max: 0, fractionWithin2: 0 });
+  });
+});
+
+describe("divergentRegions", () => {
+  it("finds contiguous high-deviation stretches of at least minLen", () => {
+    const data = [
+      pr(10, 80, 0.5), // ok
+      pr(11, 80, 5), pr(12, 80, 6), pr(13, 80, 7), // region 11-13
+      pr(14, 80, 0.5), // ok
+      pr(20, 80, 8), pr(21, 80, 9), // too short (len 2) with minLen 3
+    ];
+    const regions = divergentRegions(data, { devMin: 3, minLen: 3 });
+    expect(regions).toHaveLength(1);
+    expect(regions[0]).toMatchObject({ start: 11, end: 13, length: 3 });
+    expect(regions[0].maxDeviation).toBe(7);
+  });
+
+  it("tolerates a single-residue gap within a region", () => {
+    // residue 12 missing entirely, 13 low — but 11,14,15,16 high with maxGap default.
+    const data = [pr(11, 80, 5), pr(13, 80, 6), pr(14, 80, 6), pr(15, 80, 6)];
+    const regions = divergentRegions(data, { devMin: 3, minLen: 3, maxGap: 1 });
+    expect(regions[0]).toMatchObject({ start: 11, end: 15 });
+  });
+
+  it("returns nothing when no region qualifies", () => {
+    expect(divergentRegions([pr(1, 90, 0.2), pr(2, 90, 0.3)], { devMin: 3 })).toEqual([]);
   });
 });

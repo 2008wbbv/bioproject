@@ -5,12 +5,14 @@
  */
 import { useMemo, useState } from "react";
 import type { PerResidue } from "../engine/types.ts";
+import { useSettings } from "../settings.tsx";
 
 type SortKey = "uniprotNum" | "plddt" | "deviation";
-const CONFIDENT = 70;
-const WRONG = 3;
 
 export function DataSheet({ perResidue }: { perResidue: PerResidue[] }) {
+  const { settings } = useSettings();
+  const CONFIDENT = settings.plddtConfident;
+  const WRONG = settings.deviationWrong;
   const [sortKey, setSortKey] = useState<SortKey>("uniprotNum");
   const [asc, setAsc] = useState(true);
 
