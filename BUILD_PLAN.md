@@ -113,6 +113,11 @@ Checkboxes reflect actual repo state.
 
 ## Product features (OpenFoldUI) ✅ DONE
 
+- [x] **Dashboard home** (`workspace/Dashboard.tsx`, `stats.ts`): the landing page —
+      quick-compare, aggregate stats, TM/RMSD distributions, favorites strip, tag
+      filter, and the full sortable table. Friendly empty state.
+- [x] **Tags** on comparisons (`TagEditor`, dashboard filter, in exports/backup).
+- [x] **Dark mode** (`useTheme.ts`, persisted) with a header toggle.
 - [x] Rebrand to **OpenFoldUI**.
 - [x] **Upload your own files**: compare a local model (PDB/CIF, pLDDT in B-factor)
       vs a local or fetched reference (`UploadPanel`, `runCustomComparison`,

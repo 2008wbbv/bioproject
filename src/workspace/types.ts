@@ -41,6 +41,8 @@ export interface WorkspaceEntry {
   // Annotations.
   favorite: boolean;
   notes: string;
+  /** Free-form tags for organizing studies (e.g. "kinases", "paper-2026"). */
+  tags?: string[];
 
   // Summary metrics (for the dashboard table + export).
   rmsd: number;

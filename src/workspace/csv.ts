@@ -40,11 +40,12 @@ export function entriesCsv(entries: WorkspaceEntry[]): string {
     Number.isNaN(e.plddtErrorSpearman) ? "" : round(e.plddtErrorSpearman, 4),
     e.nMatched,
     e.favorite ? "yes" : "",
+    (e.tags ?? []).join("; "),
     e.notes,
     new Date(e.updatedAt).toISOString(),
   ]);
   return toCsv(
-    ["uniprot", "protein", "pdb_id", "chain", "rmsd", "tm_score", "gdt_ts", "plddt_error_spearman", "n_matched", "favorite", "notes", "updated"],
+    ["uniprot", "protein", "pdb_id", "chain", "rmsd", "tm_score", "gdt_ts", "plddt_error_spearman", "n_matched", "favorite", "tags", "notes", "updated"],
     rows,
   );
 }

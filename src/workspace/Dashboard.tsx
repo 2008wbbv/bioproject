@@ -1,21 +1,80 @@
 /**
- * Workspace dashboard: every saved comparison, with favorites, search, sortable
- * columns, per-row open/favorite/delete, and bulk export to Excel/CSV (SPEC §10).
+ * The home/dashboard (OpenFoldUI landing page): an at-a-glance overview of the whole
+ * workspace — quick-compare entry point, aggregate stats, TM/RMSD distributions,
+ * favorites, a tag filter, and the full sortable/filterable table with bulk export,
+ * JSON backup/import, and replication-log export (SPEC §9-10).
  */
 import { useMemo, useRef, useState } from "react";
 import type { WorkspaceEntry } from "./types.ts";
 import type { Workspace } from "./useWorkspace.ts";
-import { exportEntriesXlsx, exportEntriesCsv, downloadWorkspaceBackup, exportEntriesLogs } from "./export.ts";
+import { workspaceStats, allTags } from "./stats.ts";
+import {
+  exportEntriesXlsx,
+  exportEntriesCsv,
+  downloadWorkspaceBackup,
+  exportEntriesLogs,
+} from "./export.ts";
 import { parseWorkspace } from "./backup.ts";
+import { Distributions } from "../charts/Distributions.tsx";
 
 type SortKey = "proteinName" | "rmsd" | "tmScore" | "gdtTs" | "plddtErrorSpearman" | "nMatched" | "updatedAt";
 
-export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: WorkspaceEntry) => void }) {
+export function Dashboard({
+  ws,
+  onOpen,
+  onQuickCompare,
+  onUpload,
+  examples,
+}: {
+  ws: Workspace;
+  onOpen: (e: WorkspaceEntry) => void;
+  onQuickCompare: (query: string) => void;
+  onUpload: () => void;
+  examples: Array<{ label: string; query: string }>;
+}) {
   const [favOnly, setFavOnly] = useState(false);
   const [search, setSearch] = useState("");
+  const [tag, setTag] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
   const [asc, setAsc] = useState(false);
+  const [quick, setQuick] = useState("");
   const importRef = useRef<HTMLInputElement>(null);
+
+  const stats = useMemo(() => workspaceStats(ws.entries), [ws.entries]);
+  const tags = useMemo(() => allTags(ws.entries), [ws.entries]);
+  const favorites = useMemo(() => ws.entries.filter((e) => e.favorite).slice(0, 12), [ws.entries]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = ws.entries;
+    if (favOnly) list = list.filter((e) => e.favorite);
+    if (tag) list = list.filter((e) => (e.tags ?? []).includes(tag));
+    if (q) {
+      list = list.filter(
+        (e) =>
+          e.uniprot.toLowerCase().includes(q) ||
+          e.proteinName.toLowerCase().includes(q) ||
+          e.pdbId.toLowerCase().includes(q) ||
+          (e.tags ?? []).some((t) => t.toLowerCase().includes(q)),
+      );
+    }
+    const sorted = [...list].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === "string" && typeof bv === "string") return av.localeCompare(bv);
+      return (av as number) - (bv as number);
+    });
+    return asc ? sorted : sorted.reverse();
+  }, [ws.entries, favOnly, search, tag, sortKey, asc]);
+
+  function sortBy(key: SortKey) {
+    if (key === sortKey) setAsc((v) => !v);
+    else {
+      setSortKey(key);
+      setAsc(key === "proteinName");
+    }
+  }
+  const arrow = (key: SortKey) => (key === sortKey ? (asc ? " ▲" : " ▼") : "");
 
   async function handleImport(file: File) {
     try {
@@ -26,36 +85,6 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
       alert(`Import failed: ${(e as Error).message}`);
     }
   }
-
-  const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    let list = ws.entries;
-    if (favOnly) list = list.filter((e) => e.favorite);
-    if (q) {
-      list = list.filter(
-        (e) =>
-          e.uniprot.toLowerCase().includes(q) ||
-          e.proteinName.toLowerCase().includes(q) ||
-          e.pdbId.toLowerCase().includes(q),
-      );
-    }
-    const sorted = [...list].sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
-      if (typeof av === "string" && typeof bv === "string") return av.localeCompare(bv);
-      return (av as number) - (bv as number);
-    });
-    return asc ? sorted : sorted.reverse();
-  }, [ws.entries, favOnly, search, sortKey, asc]);
-
-  function sortBy(key: SortKey) {
-    if (key === sortKey) setAsc((v) => !v);
-    else {
-      setSortKey(key);
-      setAsc(key === "proteinName");
-    }
-  }
-  const arrow = (key: SortKey) => (key === sortKey ? (asc ? " ▲" : " ▼") : "");
 
   const importInput = (
     <input
@@ -71,55 +100,106 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
     />
   );
 
+  const quickBar = (
+    <form
+      className="quick-compare"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (quick.trim()) onQuickCompare(quick.trim());
+      }}
+    >
+      <input
+        type="text"
+        placeholder="Compare a protein — name or UniProt accession (e.g. p53 or P04637)"
+        value={quick}
+        onChange={(e) => setQuick(e.target.value)}
+      />
+      <button type="submit" className="primary">Compare</button>
+      <button type="button" onClick={onUpload}>Upload files</button>
+    </form>
+  );
+
+  // ---- empty state ----
   if (ws.entries.length === 0) {
     return (
-      <div className="empty">
-        <p>No saved comparisons yet.</p>
-        <p className="muted">Run a comparison and it will appear here automatically.</p>
-        <p>
-          {importInput}
-          <button onClick={() => importRef.current?.click()}>Import workspace JSON</button>
-        </p>
-      </div>
+      <section className="dashboard">
+        <div className="hero">
+          <h2>Welcome to OpenFoldUI</h2>
+          <p className="muted">
+            Compare a predicted structure against the real one and see where the model was{" "}
+            <em>confidently wrong</em>. Everything runs in your browser.
+          </p>
+          {quickBar}
+          <div className="examples">
+            <span className="muted">Try:</span>
+            {examples.map((ex) => (
+              <button key={ex.query} className="link" onClick={() => onQuickCompare(ex.query)}>
+                {ex.label}
+              </button>
+            ))}
+            {importInput}
+            <button className="link" onClick={() => importRef.current?.click()}>Import workspace</button>
+          </div>
+        </div>
+      </section>
     );
   }
 
+  // ---- populated dashboard ----
   return (
     <section className="dashboard">
+      {quickBar}
+
+      <div className="metrics dash-stats">
+        <Stat label="Comparisons" value={String(stats.count)} sub={`${stats.uploads} uploaded`} />
+        <Stat label="Favorites" value={String(stats.favorites)} sub="starred" />
+        <Stat label="Median TM" value={stats.medianTm.toFixed(3)} sub={`mean ${stats.meanTm.toFixed(3)}`} />
+        <Stat label="Mean RMSD" value={`${stats.meanRmsd.toFixed(2)} Å`} sub="across set" />
+        <Stat label="Same-fold" value={`${(stats.fractionGoodFold * 100).toFixed(0)}%`} sub="TM ≥ 0.5" />
+      </div>
+
+      {stats.count >= 3 && (
+        <Distributions points={ws.entries.map((e) => ({ tmScore: e.tmScore, rmsd: e.rmsd }))} />
+      )}
+
+      {favorites.length > 0 && (
+        <div className="fav-strip">
+          <span className="muted">★ Favorites:</span>
+          {favorites.map((e) => (
+            <button key={e.id} className="chip" onClick={() => onOpen(e)}>
+              {e.proteinName} <span className="muted">· TM {e.tmScore.toFixed(2)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tags.length > 0 && (
+        <div className="tag-filter">
+          <span className="muted">Tags:</span>
+          <button className={`chip ${tag === null ? "on" : ""}`} onClick={() => setTag(null)}>All</button>
+          {tags.map((t) => (
+            <button key={t.tag} className={`chip ${tag === t.tag ? "on" : ""}`} onClick={() => setTag(t.tag === tag ? null : t.tag)}>
+              {t.tag} <span className="muted">{t.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="dash-toolbar">
-        <input
-          type="search"
-          placeholder="Search protein / UniProt / PDB…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <input type="search" placeholder="Search protein / UniProt / PDB / tag…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <label className="chk">
-          <input type="checkbox" checked={favOnly} onChange={(e) => setFavOnly(e.target.checked)} /> ★ Favorites
-          only
+          <input type="checkbox" checked={favOnly} onChange={(e) => setFavOnly(e.target.checked)} /> ★ only
         </label>
         <div className="spacer" />
         <span className="muted">{rows.length} shown</span>
-        <button onClick={() => exportEntriesXlsx(rows, favOnly ? "favorites" : "comparisons")}>
-          Export Excel
-        </button>
-        <button onClick={() => exportEntriesCsv(rows, favOnly ? "favorites" : "comparisons")}>Export CSV</button>
-        <button onClick={() => exportEntriesLogs(rows, favOnly ? "favorites-logs" : "logs")} title="Replication logs (provenance + methods)">
-          Export logs
-        </button>
-        <button onClick={() => downloadWorkspaceBackup(ws.entries)} title="Back up all comparisons as JSON">
-          Backup JSON
-        </button>
+        <button onClick={() => exportEntriesXlsx(rows, favOnly ? "favorites" : "comparisons")}>Export Excel</button>
+        <button onClick={() => exportEntriesCsv(rows, favOnly ? "favorites" : "comparisons")}>CSV</button>
+        <button onClick={() => exportEntriesLogs(rows, "logs")} title="Replication logs (provenance + methods)">Logs</button>
+        <button onClick={() => downloadWorkspaceBackup(ws.entries)} title="Back up all comparisons as JSON">Backup</button>
         {importInput}
-        <button onClick={() => importRef.current?.click()} title="Import a workspace JSON backup">
-          Import
-        </button>
-        <button
-          className="danger"
-          onClick={() => {
-            if (confirm("Clear all saved comparisons? This cannot be undone.")) void ws.clear();
-          }}
-        >
-          Clear history
+        <button onClick={() => importRef.current?.click()}>Import</button>
+        <button className="danger" onClick={() => { if (confirm("Clear all saved comparisons? This cannot be undone.")) void ws.clear(); }}>
+          Clear
         </button>
       </div>
 
@@ -135,6 +215,7 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
               <th onClick={() => sortBy("gdtTs")}>GDT{arrow("gdtTs")}</th>
               <th onClick={() => sortBy("plddtErrorSpearman")}>ρ{arrow("plddtErrorSpearman")}</th>
               <th onClick={() => sortBy("nMatched")}>Matched{arrow("nMatched")}</th>
+              <th>Tags</th>
               <th onClick={() => sortBy("updatedAt")}>Updated{arrow("updatedAt")}</th>
               <th></th>
             </tr>
@@ -143,21 +224,13 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
             {rows.map((e) => (
               <tr key={e.id}>
                 <td className="fav-cell">
-                  <button
-                    className={`star ${e.favorite ? "on" : ""}`}
-                    title={e.favorite ? "Unfavorite" : "Favorite"}
-                    onClick={() => void ws.toggleFavorite(e.id)}
-                  >
+                  <button className={`star ${e.favorite ? "on" : ""}`} title={e.favorite ? "Unfavorite" : "Favorite"} onClick={() => void ws.toggleFavorite(e.id)}>
                     {e.favorite ? "★" : "☆"}
                   </button>
                 </td>
                 <td>
-                  <button className="link strong" onClick={() => onOpen(e)}>
-                    {e.proteinName}
-                  </button>
-                  <div className="muted small">
-                    {e.uniprot} {e.notes ? "· 📝" : ""}
-                  </div>
+                  <button className="link strong" onClick={() => onOpen(e)}>{e.proteinName}</button>
+                  <div className="muted small">{e.uniprot}{e.source === "upload" ? " · uploaded" : ""}{e.notes ? " · 📝" : ""}</div>
                 </td>
                 <td>{e.pdbId}·{e.chain}</td>
                 <td>{e.rmsd.toFixed(2)}</td>
@@ -165,11 +238,14 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
                 <td>{e.gdtTs.toFixed(3)}</td>
                 <td>{Number.isNaN(e.plddtErrorSpearman) ? "—" : e.plddtErrorSpearman.toFixed(2)}</td>
                 <td>{e.nMatched}</td>
+                <td className="tags-cell">
+                  {(e.tags ?? []).map((t) => (
+                    <button key={t} className="tag mini" onClick={() => setTag(t)}>{t}</button>
+                  ))}
+                </td>
                 <td className="muted small">{new Date(e.updatedAt).toLocaleDateString()}</td>
                 <td>
-                  <button className="link danger" onClick={() => void ws.remove(e.id)} title="Delete">
-                    ✕
-                  </button>
+                  <button className="link danger" onClick={() => void ws.remove(e.id)} title="Delete">✕</button>
                 </td>
               </tr>
             ))}
@@ -177,5 +253,15 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
         </table>
       </div>
     </section>
+  );
+}
+
+function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="metric">
+      <div className="metric-value">{value}</div>
+      <div className="metric-label">{label}</div>
+      <div className="metric-hint muted">{sub}</div>
+    </div>
   );
 }

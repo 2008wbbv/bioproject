@@ -40,7 +40,7 @@ export function perResidueSheet(entry: WorkspaceEntry): Sheet {
 /** One row per saved comparison — the dashboard as a sheet. */
 export function comparisonsSheet(entries: WorkspaceEntry[]): Sheet {
   const rows: Cell[][] = [
-    ["UniProt", "Protein", "PDB", "Chain", "RMSD (Å)", "TM-score", "GDT-TS", "pLDDT–error ρ", "Matched", "Favorite", "Notes", "Saved"],
+    ["UniProt", "Protein", "PDB", "Chain", "RMSD (Å)", "TM-score", "GDT-TS", "pLDDT–error ρ", "Matched", "Favorite", "Tags", "Notes", "Saved"],
   ];
   for (const e of entries) {
     rows.push([
@@ -54,6 +54,7 @@ export function comparisonsSheet(entries: WorkspaceEntry[]): Sheet {
       Number.isNaN(e.plddtErrorSpearman) ? "n/a" : r(e.plddtErrorSpearman, 4),
       e.nMatched,
       e.favorite ? "yes" : "",
+      (e.tags ?? []).join("; "),
       e.notes,
       new Date(e.updatedAt).toISOString(),
     ]);

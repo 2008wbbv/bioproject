@@ -51,6 +51,7 @@ export interface Workspace {
   saveResult: (query: string, data: PipelineResult) => Promise<WorkspaceEntry>;
   toggleFavorite: (id: string) => Promise<void>;
   setNotes: (id: string, notes: string) => Promise<void>;
+  setTags: (id: string, tags: string[]) => Promise<void>;
   remove: (id: string) => Promise<void>;
   clear: () => Promise<void>;
   importEntries: (entries: WorkspaceEntry[]) => Promise<number>;
@@ -128,6 +129,19 @@ export function useWorkspace(): Workspace {
     [upsertLocal],
   );
 
+  const setTags = useCallback(
+    async (id: string, tags: string[]) => {
+      const e = await db.getEntry(id);
+      if (!e) return;
+      // De-dupe, trim, drop blanks; keep order.
+      const clean = [...new Set(tags.map((t) => t.trim()).filter(Boolean))];
+      const updated = { ...e, tags: clean };
+      await db.putEntry(updated);
+      upsertLocal(updated);
+    },
+    [upsertLocal],
+  );
+
   const remove = useCallback(async (id: string) => {
     await db.deleteEntry(id);
     setEntries((prev) => prev.filter((e) => e.id !== id));
@@ -150,5 +164,5 @@ export function useWorkspace(): Workspace {
     return s ? normalizeStored(s) : undefined;
   }, []);
 
-  return { entries, ready, saveResult, toggleFavorite, setNotes, remove, clear, importEntries, loadStructures };
+  return { entries, ready, saveResult, toggleFavorite, setNotes, setTags, remove, clear, importEntries, loadStructures };
 }

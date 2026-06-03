@@ -24,6 +24,8 @@ import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv, exportEntryLog } from "./workspace/export.ts";
 import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
+import { TagEditor } from "./components/TagEditor.tsx";
+import { useTheme } from "./useTheme.ts";
 import "./styles.css";
 
 /** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
@@ -45,7 +47,7 @@ const MolstarViewer = lazy(() =>
 );
 
 type Status = "idle" | "loading" | "error" | "done";
-type View = "compare" | "batch" | "workspace";
+type View = "dashboard" | "compare" | "batch";
 
 interface Active {
   id: string;
@@ -61,7 +63,8 @@ const EXAMPLES = [
 
 export function App() {
   const ws = useWorkspace();
-  const [view, setView] = useState<View>("compare");
+  const [view, setView] = useState<View>("dashboard");
+  const [theme, setTheme] = useTheme();
   const [compareMode, setCompareMode] = useState<"database" | "upload">("database");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -121,17 +124,26 @@ export function App() {
             <em>confidently wrong</em>. AlphaFold-DB or your own files.
           </p>
         </div>
-        <nav className="nav">
-          <button className={view === "compare" ? "on" : ""} onClick={() => setView("compare")}>
-            Compare
+        <div className="header-right">
+          <nav className="nav">
+            <button className={view === "dashboard" ? "on" : ""} onClick={() => setView("dashboard")}>
+              Dashboard{ws.entries.length ? ` (${ws.entries.length})` : ""}
+            </button>
+            <button className={view === "compare" ? "on" : ""} onClick={() => setView("compare")}>
+              Compare
+            </button>
+            <button className={view === "batch" ? "on" : ""} onClick={() => setView("batch")}>
+              Batch
+            </button>
+          </nav>
+          <button
+            className="theme-toggle"
+            title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          >
+            {theme === "dark" ? "☀" : "☾"}
           </button>
-          <button className={view === "batch" ? "on" : ""} onClick={() => setView("batch")}>
-            Batch
-          </button>
-          <button className={view === "workspace" ? "on" : ""} onClick={() => setView("workspace")}>
-            Workspace{ws.entries.length ? ` (${ws.entries.length})` : ""}
-          </button>
-        </nav>
+        </div>
       </header>
 
       {view === "compare" && (
@@ -190,15 +202,24 @@ export function App() {
               onPickStructure={(pdb) => run(liveEntry.query || liveEntry.uniprot, pdb)}
               onToggleFavorite={() => void ws.toggleFavorite(liveEntry.id)}
               onNotes={(n) => void ws.setNotes(liveEntry.id, n)}
+              onTags={(t) => void ws.setTags(liveEntry.id, t)}
               onCompareAccession={(acc) => { setQuery(acc); void run(acc); }}
             />
           )}
         </>
       )}
 
-      {view === "batch" && <BatchView ws={ws} onOpen={openEntry} />}
+      {view === "dashboard" && (
+        <Dashboard
+          ws={ws}
+          onOpen={openEntry}
+          onQuickCompare={(q) => { setQuery(q); setCompareMode("database"); void run(q); }}
+          onUpload={() => { setCompareMode("upload"); setView("compare"); }}
+          examples={EXAMPLES}
+        />
+      )}
 
-      {view === "workspace" && <Dashboard ws={ws} onOpen={openEntry} />}
+      {view === "batch" && <BatchView ws={ws} onOpen={openEntry} />}
 
       <footer className="app-footer">
         <span className="muted">
@@ -216,6 +237,7 @@ function Results({
   onPickStructure,
   onToggleFavorite,
   onNotes,
+  onTags,
   onCompareAccession,
 }: {
   entry: WorkspaceEntry;
@@ -224,6 +246,7 @@ function Results({
   onPickStructure: (pdbId: string) => void;
   onToggleFavorite: () => void;
   onNotes: (notes: string) => void;
+  onTags: (tags: string[]) => void;
   onCompareAccession: (accession: string) => void;
 }) {
   const [mode, setMode] = useState<ColorMode>("deviation");
@@ -323,6 +346,7 @@ function Results({
 
       <ConfidenceSummary perResidue={entry.perResidue} />
 
+      <TagEditor tags={entry.tags ?? []} onChange={onTags} />
       <NotesEditor value={entry.notes} onSave={onNotes} />
 
       <div className="sheet-toggle">

@@ -689,3 +689,150 @@ button.star:not(.on) {
 @media (max-width: 760px) {
   .upload-drops, .summary-grid { grid-template-columns: 1fr; }
 }
+
+/* --- dark mode --- */
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #3b82f6;
+  --danger: #f87171;
+}
+:root[data-theme="dark"] body { background: var(--bg); color: var(--text); }
+:root[data-theme="dark"] .nav button,
+:root[data-theme="dark"] .mode-tabs button,
+:root[data-theme="dark"] .toggle button,
+:root[data-theme="dark"] .export-group button,
+:root[data-theme="dark"] .dash-toolbar button,
+:root[data-theme="dark"] .search input,
+:root[data-theme="dark"] .upload-controls input,
+:root[data-theme="dark"] .quick-compare input,
+:root[data-theme="dark"] .dash-toolbar input,
+:root[data-theme="dark"] .notes textarea,
+:root[data-theme="dark"] .batch-input,
+:root[data-theme="dark"] .tag-input,
+:root[data-theme="dark"] .structure-pick select,
+:root[data-theme="dark"] .chip {
+  background: #0b1220;
+  color: var(--text);
+}
+:root[data-theme="dark"] .datasheet th,
+:root[data-theme="dark"] .dashboard th { background: #0b1220; }
+:root[data-theme="dark"] .toggle button.on,
+:root[data-theme="dark"] .nav button.on,
+:root[data-theme="dark"] .mode-tabs button.on { background: var(--accent); color: white; }
+:root[data-theme="dark"] .warnings { background: #422006; border-color: #854d0e; }
+:root[data-theme="dark"] .status.error { background: #450a0a; border-color: #7f1d1d; }
+:root[data-theme="dark"] .filedrop.over { background: #0b1f3a; }
+:root[data-theme="dark"] .filedrop.has-file { background: #052e16; border-color: #166534; }
+:root[data-theme="dark"] tr.row-wrong, :root[data-theme="dark"] .datasheet tr.row-wrong { background: #3f1d1d; }
+
+/* --- header layout + theme toggle --- */
+.header-right { display: flex; align-items: center; gap: 0.6rem; }
+.theme-toggle {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  width: 36px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* --- dashboard home --- */
+.hero {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+.hero h2 { margin: 0 0 0.4rem; font-size: 1.5rem; }
+.hero .examples { justify-content: center; }
+.quick-compare {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0 0.4rem;
+}
+.hero .quick-compare { max-width: 620px; margin-inline: auto; }
+.quick-compare input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--panel);
+  color: var(--text);
+}
+.quick-compare .primary {
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+.quick-compare button[type="button"] {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+.dash-stats { grid-template-columns: repeat(5, 1fr); margin-top: 1rem; }
+
+.fav-strip, .tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 1rem;
+}
+.chip {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.chip.on { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* --- tags --- */
+.tag-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #eef2ff;
+  color: #3730a3;
+  border: none;
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+}
+:root[data-theme="dark"] .tag { background: #312e81; color: #c7d2fe; }
+.tag.mini { cursor: pointer; margin: 0.1rem 0.15rem 0.1rem 0; }
+.tag-x { border: none; background: none; cursor: pointer; color: inherit; font-size: 0.9rem; line-height: 1; }
+.tag-input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.82rem;
+  width: 8rem;
+  background: var(--panel);
+  color: var(--text);
+}
+.tags-cell { max-width: 180px; }

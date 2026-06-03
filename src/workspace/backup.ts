@@ -49,6 +49,7 @@ export function parseWorkspace(text: string): WorkspaceEntry[] {
       updatedAt: asNum(e.updatedAt, now),
       favorite: e.favorite === true,
       notes: asStr(e.notes),
+      tags: Array.isArray(e.tags) ? e.tags.filter((t): t is string => typeof t === "string") : undefined,
       rmsd: asNum(e.rmsd),
       tmScore: asNum(e.tmScore),
       gdtTs: asNum(e.gdtTs),
