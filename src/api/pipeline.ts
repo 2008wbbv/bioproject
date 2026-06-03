@@ -43,6 +43,8 @@ export interface PipelineResult {
   /** Where the model/reference came from, for the replication log. */
   modelSource: string;
   refSource: string;
+  /** AlphaFold PAE JSON URL (database flow only). */
+  paeUrl?: string;
   /** Ranked structures for the override dropdown (database flow only). */
   alternatives?: RankedStructure[];
   /** UniProt disambiguation candidates (database flow only). */
@@ -191,6 +193,7 @@ export async function runComparison(query: string, opts: RunOptions = {}): Promi
   });
   assembled.alternatives = alternatives;
   assembled.candidates = resolved.candidates;
+  assembled.paeUrl = af.paeUrl;
   return assembled;
 }
 

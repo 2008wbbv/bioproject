@@ -5,6 +5,7 @@
  */
 import { fetchJson, fetchText } from "./http.ts";
 import { NotFoundError } from "./errors.ts";
+import { parsePae, type Pae } from "../engine/pae.ts";
 
 interface PredictionMeta {
   pdbUrl?: string;
@@ -42,4 +43,9 @@ export async function fetchAlphaFold(accession: string): Promise<AlphaFoldModel>
     uniprotStart: m.uniprotStart,
     uniprotEnd: m.uniprotEnd,
   };
+}
+
+/** Fetch + parse a PAE JSON document (lazy — only when the user opens the PAE view). */
+export async function fetchPae(url: string): Promise<Pae | null> {
+  return parsePae(await fetchJson<unknown>(url, "AlphaFold"));
 }

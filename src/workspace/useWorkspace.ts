@@ -99,6 +99,7 @@ export function useWorkspace(): Workspace {
         refFormat: data.refFormat,
         modelCaPdb: data.modelCaPdb,
         refCaPdb: data.refCaPdb,
+        paeUrl: data.paeUrl,
         superposition: data.superposition,
       });
       upsertLocal(entry);

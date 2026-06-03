@@ -17,6 +17,7 @@ import { NotesEditor } from "./components/NotesEditor.tsx";
 import { ConfidenceSummary } from "./components/ConfidenceSummary.tsx";
 import { UploadPanel } from "./components/UploadPanel.tsx";
 import { SearchPanel } from "./search/SearchPanel.tsx";
+import { PaePanel } from "./components/PaePanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
@@ -40,6 +41,7 @@ function structuresOf(id: string, data: PipelineResult): StoredStructures {
     refFormat: data.refFormat,
     modelCaPdb: data.modelCaPdb,
     refCaPdb: data.refCaPdb,
+    paeUrl: data.paeUrl,
     superposition: data.superposition,
   };
 }
@@ -411,6 +413,8 @@ function Results({
           nativeRmsd={entry.rmsd}
         />
       )}
+
+      {structures?.paeUrl && <PaePanel paeUrl={structures.paeUrl} />}
 
       {structures && <SearchPanel afPdbText={structures.modelText} onOpenAccession={onCompareAccession} />}
     </section>

@@ -80,6 +80,8 @@ export interface StoredStructures {
   modelCaPdb?: string;
   /** CA-only PDB of the reference chain, for TM-align validation. */
   refCaPdb?: string;
+  /** AlphaFold PAE JSON URL (database/AlphaFold entries only). */
+  paeUrl?: string;
 
   // --- legacy fields (read-only back-compat) ---
   afPdbText?: string;
