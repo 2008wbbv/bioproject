@@ -6,7 +6,7 @@
  */
 import { useState } from "react";
 import { detectFormat } from "../engine/format.ts";
-import type { UploadedFile } from "../api/pipeline.ts";
+import type { AlignBy, UploadedFile } from "../api/pipeline.ts";
 
 const ACCEPT = ".pdb,.ent,.cif,.mmcif,.bcif";
 
@@ -66,12 +66,13 @@ export function UploadPanel({
   onCompare,
   busy,
 }: {
-  onCompare: (model: UploadedFile, ref: UploadedFile, uniprot?: string) => void;
+  onCompare: (model: UploadedFile, ref: UploadedFile, uniprot: string | undefined, alignBy: AlignBy) => void;
   busy: boolean;
 }) {
   const [model, setModel] = useState<UploadedFile | null>(null);
   const [ref, setRef] = useState<UploadedFile | null>(null);
   const [uniprot, setUniprot] = useState("");
+  const [alignBy, setAlignBy] = useState<AlignBy>("auto");
 
   return (
     <div className="upload-panel">
@@ -96,17 +97,25 @@ export function UploadPanel({
           value={uniprot}
           onChange={(e) => setUniprot(e.target.value)}
         />
+        <label className="align-by">
+          Match residues by
+          <select value={alignBy} onChange={(e) => setAlignBy(e.target.value as AlignBy)}>
+            <option value="auto">Auto (shared numbering)</option>
+            <option value="author">Author numbering</option>
+            <option value="sequence">Sequence alignment</option>
+          </select>
+        </label>
         <button
           className="primary"
           disabled={!model || !ref || busy}
-          onClick={() => model && ref && onCompare(model, ref, uniprot.trim() || undefined)}
+          onClick={() => model && ref && onCompare(model, ref, uniprot.trim() || undefined, alignBy)}
         >
           {busy ? "Comparing…" : "Compare uploaded files"}
         </button>
       </div>
       <p className="muted small">
-        Files stay in your browser — nothing is uploaded to a server. Both files should be the same protein
-        with matching residue numbering.
+        Files stay in your browser — nothing is uploaded to a server. Use <strong>Sequence alignment</strong> if
+        the two files don't share residue numbering.
       </p>
     </div>
   );

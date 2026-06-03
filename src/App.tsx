@@ -4,7 +4,7 @@
  * and export to Excel/CSV. Persistence is IndexedDB (src/workspace).
  */
 import { lazy, Suspense, useMemo, useState } from "react";
-import { runComparison, runCustomComparison, type PipelineResult, type UploadedFile } from "./api/pipeline.ts";
+import { runComparison, runCustomComparison, type AlignBy, type PipelineResult, type UploadedFile } from "./api/pipeline.ts";
 import type { RankedStructure } from "./api/pdbe.ts";
 import { ApiError } from "./api/errors.ts";
 import { ScatterPlddtDeviation } from "./charts/ScatterPlddtDeviation.tsx";
@@ -89,12 +89,12 @@ export function App() {
     }
   }
 
-  async function runUpload(model: UploadedFile, ref: UploadedFile, uniprot?: string) {
+  async function runUpload(model: UploadedFile, ref: UploadedFile, uniprot: string | undefined, alignBy: AlignBy) {
     setStatus("loading");
     setError("");
     setView("compare");
     try {
-      const data = runCustomComparison(model, ref, uniprot ? { uniprot } : {});
+      const data = runCustomComparison(model, ref, { uniprot, alignBy });
       const label = `${model.name} vs ${ref.name}`;
       const entry = await ws.saveResult(label, data);
       setActive({ id: entry.id, structures: structuresOf(entry.id, data) });
@@ -307,6 +307,11 @@ function Results({
           )}
           <span className="muted">{entry.pdbId} · chain {entry.chain}</span>
           <div className="export-group">
+            {entry.source === "database" && (
+              <button onClick={() => onCompareAccession(entry.query || entry.uniprot)} title="Re-fetch and recompute">
+                Re-run
+              </button>
+            )}
             <button onClick={() => exportEntryXlsx(entry)}>Export Excel</button>
             <button onClick={() => exportEntryCsv(entry)}>CSV</button>
             <button onClick={() => exportEntryLog(entry)} title="Provenance + methods to replicate this">

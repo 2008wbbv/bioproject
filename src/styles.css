@@ -877,3 +877,12 @@ button.star:not(.on) {
   color: var(--text);
   cursor: pointer;
 }
+
+.align-by { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+.align-by select {
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+}

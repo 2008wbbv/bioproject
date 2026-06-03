@@ -16,6 +16,7 @@ import {
   segmentsFromBestStructure,
 } from "../engine/sifts.ts";
 import { alignByUniprot } from "../engine/align.ts";
+import { assignBySequenceAlignment } from "../engine/seqalign.ts";
 import { computeComparison } from "../engine/compare.ts";
 import type { ComparisonResult, ParsedStructure, ResidueRecord } from "../engine/types.ts";
 import type { ComparisonSource } from "../workspace/types.ts";
@@ -199,16 +200,28 @@ export interface UploadedFile {
   format: StructFormat;
 }
 
+/** How to put the two uploaded structures into residue correspondence. */
+export type AlignBy = "auto" | "author" | "sequence";
+
 export interface CustomOptions {
   /** Optional UniProt accession, if the user wants to label/cross-reference it. */
   uniprot?: string;
+  /** Residue correspondence basis (default "auto"). */
+  alignBy?: AlignBy;
 }
+
+const ALIGN_NOTE: Record<AlignBy, string> = {
+  auto: "Uploaded files: residues matched on shared numbering (assumed same protein).",
+  author: "Uploaded files: residues matched on author (file) numbering.",
+  sequence: "Uploaded files: residues matched by global sequence alignment.",
+};
 
 /**
  * Upload flow: compare a user-provided predicted model against a user-provided
- * reference. Both are assumed to share residue numbering (the same protein); the
- * model's pLDDT lives in its B-factor column. Numbering comes from per-atom SIFTS
- * xref if a CIF carries it, else the author numbering of each file.
+ * reference. The model's pLDDT lives in its B-factor column. Residue correspondence:
+ *   - "auto":     per-atom SIFTS xref if present, else author numbering
+ *   - "author":   force author (file) numbering on both
+ *   - "sequence": global Needleman–Wunsch alignment (for mismatched numbering)
  */
 export function runCustomComparison(
   model: UploadedFile,
@@ -216,12 +229,20 @@ export function runCustomComparison(
   opts: CustomOptions = {},
 ): PipelineResult {
   const acc = opts.uniprot?.toUpperCase();
+  const alignBy = opts.alignBy ?? "auto";
   const modelParsed = parseByFormat(model.text, model.format, acc ? { uniprotAcc: acc } : {});
   const refParsed = parseByFormat(ref.text, ref.format, acc ? { uniprotAcc: acc } : {});
 
-  // Use UniProt numbers if a file carried them (CIF xref); otherwise author numbers.
-  if (modelParsed.residues.every((r) => r.uniprotNum === null)) assignUniprotFromAuth(modelParsed.residues);
-  if (refParsed.residues.every((r) => r.uniprotNum === null)) assignUniprotFromAuth(refParsed.residues);
+  if (alignBy === "sequence") {
+    assignBySequenceAlignment(modelParsed.residues, refParsed.residues);
+  } else if (alignBy === "author") {
+    assignUniprotFromAuth(modelParsed.residues);
+    assignUniprotFromAuth(refParsed.residues);
+  } else {
+    // auto: use UniProt numbers if a file carried them (CIF xref); else author.
+    if (modelParsed.residues.every((r) => r.uniprotNum === null)) assignUniprotFromAuth(modelParsed.residues);
+    if (refParsed.residues.every((r) => r.uniprotNum === null)) assignUniprotFromAuth(refParsed.residues);
+  }
 
   const assembled = assembleComparison(modelParsed, refParsed, {
     uniprot: acc ?? "(uploaded)",
@@ -234,7 +255,7 @@ export function runCustomComparison(
     refFormat: ref.format,
     modelSource: `uploaded file: ${model.name}`,
     refSource: `uploaded file: ${ref.name}`,
-    extraWarnings: ["Uploaded files: residues aligned on shared numbering (assumed same protein)."],
+    extraWarnings: [ALIGN_NOTE[alignBy]],
   });
   return assembled;
 }
