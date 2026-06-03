@@ -62,6 +62,22 @@ export function BatchView({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
         rows={6}
         disabled={running}
       />
+      <div className="batch-upload">
+        <label className="link">
+          <input
+            type="file"
+            accept=".txt,.csv,.tsv,.list,text/plain"
+            style={{ display: "none" }}
+            disabled={running}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void f.text().then((t) => setText((prev) => (prev ? prev + "\n" : "") + t));
+              e.target.value = "";
+            }}
+          />
+          Load IDs from a file (.txt/.csv)
+        </label>
+      </div>
 
       <div className="batch-controls">
         <button className="primary" onClick={() => void start()} disabled={running || ids.length === 0}>

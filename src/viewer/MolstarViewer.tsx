@@ -32,11 +32,13 @@ const SPEC: PluginUISpec = {
 
 export function MolstarViewer({
   models,
-  expCifText,
+  refText,
+  refFormat,
   mode,
 }: {
   models: ViewerModels;
-  expCifText: string;
+  refText: string;
+  refFormat: "pdb" | "cif";
   mode: ColorMode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,9 +82,12 @@ export function MolstarViewer({
       await plugin.clear();
       if (cancelled) return;
 
-      // Experimental structure — neutral grey reference.
-      const expData = await plugin.builders.data.rawData({ data: expCifText });
-      const expTraj = await plugin.builders.structure.parseTrajectory(expData, "mmcif");
+      // Reference structure — neutral grey.
+      const expData = await plugin.builders.data.rawData({ data: refText });
+      const expTraj = await plugin.builders.structure.parseTrajectory(
+        expData,
+        refFormat === "cif" ? "mmcif" : "pdb",
+      );
       const expModel = await plugin.builders.structure.createModel(expTraj);
       const expStruct = await plugin.builders.structure.createStructure(expModel);
       await plugin.builders.structure.representation.addRepresentation(expStruct, {
@@ -112,7 +117,7 @@ export function MolstarViewer({
     return () => {
       cancelled = true;
     };
-  }, [ready, models, expCifText, mode]);
+  }, [ready, models, refText, refFormat, mode]);
 
   return <div ref={containerRef} className="molstar-container" />;
 }

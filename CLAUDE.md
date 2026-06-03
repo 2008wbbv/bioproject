@@ -3,13 +3,21 @@
 Summary for working in this repo. `SPEC.md` is the full source of truth;
 `BUILD_PLAN.md` is the ordered task list and current status.
 
+The product is named **OpenFoldUI**.
+
 ## What this is
 
-A **client-only** web tool that compares an AlphaFold prediction against the best
-experimental structure of the same protein and quantifies the agreement: RMSD,
-TM-score, GDT-TS, per-residue deviation, and — the scientific payload — the
-**Spearman correlation between AlphaFold pLDDT and actual per-residue error**. The
-story it tells: where AlphaFold was *confidently wrong* (high pLDDT, high deviation).
+A **client-only** web tool (**OpenFoldUI**) that compares a predicted structure —
+AlphaFold-DB *or your own uploaded model* — against the best experimental structure
+of the same protein and quantifies the agreement: RMSD, TM-score, GDT-TS,
+per-residue deviation, and — the scientific payload — the **Spearman correlation
+between pLDDT and actual per-residue error**. The story it tells: where the model was
+*confidently wrong* (high pLDDT, high deviation).
+
+Lab-facing surface: upload your own files, a persistent workspace (history,
+favorites, notes), batch mode, Foldseek search, an in-app data sheet, Excel/CSV
+export, workspace JSON backup/import, superposed-PDB download, and per-comparison
+**replication logs** (provenance + methods).
 
 Everything runs in the browser. No backend, except the optional self-hosted Foldseek
 search (SPEC §11), which is isolated in `src/search/` and never a core dependency.

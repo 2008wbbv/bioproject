@@ -8,24 +8,18 @@
  * dependency of the core metrics).
  */
 import { useState } from "react";
-import { parseCif } from "../engine/parseCif.ts";
-import { caPdbFromResidues } from "../engine/writePdb.ts";
 import { runTmalign, TmalignError, type TmalignResult } from "../engine/backends/tmalign.ts";
 
 type Phase = "idle" | "running" | "done" | "error";
 
 export function ValidationPanel({
-  afPdbText,
-  expCifText,
-  uniprot,
-  chain,
+  modelCaPdb,
+  refCaPdb,
   nativeTm,
   nativeRmsd,
 }: {
-  afPdbText: string;
-  expCifText: string;
-  uniprot: string;
-  chain: string;
+  modelCaPdb: string;
+  refCaPdb: string;
   nativeTm: number;
   nativeRmsd: number;
 }) {
@@ -37,14 +31,11 @@ export function ValidationPanel({
     setPhase("running");
     setError("");
     try {
-      // Feed TM-align clean PDB: the AF model as-is, the experimental chain as a
-      // CA-only PDB (TM-align is CA-based) to avoid any mmCIF-support assumptions.
-      const exp = parseCif(expCifText, { uniprotAcc: uniprot });
-      const expCaPdb = caPdbFromResidues(exp.residues, chain);
-      // Pass the experimental structure FIRST: the wrapper reports the TM-score
+      // Both inputs are precomputed CA-only PDBs (TM-align is CA-based), so this is
+      // format-safe. Pass the reference FIRST: the wrapper reports the TM-score
       // normalised by Chain_1's length, and the native engine normalises by the
-      // reference (experimental) length — so this makes the two directly comparable.
-      const r = await runTmalign(expCaPdb, afPdbText);
+      // reference length — so the two are directly comparable.
+      const r = await runTmalign(refCaPdb, modelCaPdb);
       setResult(r);
       setPhase("done");
     } catch (e) {

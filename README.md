@@ -1,12 +1,19 @@
-# AlphaFold vs Experimental
+# OpenFoldUI
 
-A **client-only** web tool that compares an AlphaFold prediction against the best
-experimental structure of the same protein and quantifies the agreement: RMSD,
-TM-score, GDT-TS, per-residue deviation, and — the scientific payload — the
-**Spearman correlation between AlphaFold pLDDT and actual per-residue error**.
+A **client-only** web tool that compares a predicted protein structure — from
+AlphaFold-DB **or your own uploaded model** — against the best experimental
+structure and quantifies the agreement: RMSD, TM-score, GDT-TS, per-residue
+deviation, and — the scientific payload — the **Spearman correlation between pLDDT
+and actual per-residue error**.
 
-The story it tells: where AlphaFold was *confidently wrong* — high pLDDT (the model
+The story it tells: where the model was *confidently wrong* — high pLDDT (the model
 was sure) but high deviation (it was off anyway).
+
+Built for labs: **upload your own structures**, a persistent **workspace** (history,
+favorites, notes), **batch mode**, **Foldseek** structure search, an in-app **data
+sheet**, **Excel/CSV export**, **workspace JSON backup/import**, **superposed-PDB
+download**, and per-comparison **replication logs** (provenance + a methods
+paragraph) so analyses can be reproduced.
 
 > **Status:** all spec phases are built and tested — the comparison engine, the API
 > layer + pipeline, the single-protein UI (metrics, Observable Plot charts,

@@ -8,16 +8,33 @@
  */
 import type { PerResidue, Superposition } from "../engine/types.ts";
 
+/** Where a comparison came from: a database lookup or user-uploaded files. */
+export type ComparisonSource = "database" | "upload";
+
+/** Provenance for reproducing a comparison (exported in the replication log). */
+export interface Provenance {
+  appVersion: string;
+  /** Where the predicted model came from (AlphaFold URL or uploaded filename). */
+  modelSource: string;
+  /** Where the reference came from (PDBe/RCSB source label or uploaded filename). */
+  refSource: string;
+}
+
+/** Structure file format. */
+export type StructFormat = "pdb" | "cif";
+
 /** A saved comparison: metrics + annotations + per-residue data. */
 export interface WorkspaceEntry {
-  /** Stable key: `${uniprot}:${pdbId}:${chain}`. */
+  /** Stable key: `${uniprot}:${pdbId}:${chain}` (database) or `custom:…` (upload). */
   id: string;
   uniprot: string;
   proteinName: string;
   pdbId: string;
   chain: string;
-  /** What the user typed to produce this. */
+  /** What the user typed to produce this (or the uploaded file names). */
   query: string;
+  /** "database" (UniProt/PDBe/AlphaFold) or "upload" (user files). */
+  source: ComparisonSource;
   createdAt: number;
   updatedAt: number;
 
@@ -35,12 +52,46 @@ export interface WorkspaceEntry {
 
   // Full per-residue series (data sheet, charts, export).
   perResidue: PerResidue[];
+
+  /** How this comparison was produced, for the replication log. */
+  provenance?: Provenance;
 }
 
-/** Heavy raw structures for re-opening the 3D viewer without refetching. */
+/**
+ * Heavy raw structures for re-opening the 3D viewer / re-validating without
+ * refetching. Formats are tracked so the viewer parses correctly, and CA-only PDBs
+ * are precomputed so TM-align validation never has to guess a format.
+ *
+ * Legacy entries (before formats) used `afPdbText`/`expCifText`; `normalizeStored`
+ * maps them forward. New fields are optional for back-compat.
+ */
 export interface StoredStructures {
   id: string;
-  afPdbText: string;
-  expCifText: string;
+  /** Predicted-model file text (AlphaFold or uploaded). */
+  modelText: string;
+  modelFormat: StructFormat;
+  /** Reference/experimental file text. */
+  refText: string;
+  refFormat: StructFormat;
   superposition: Superposition;
+  /** CA-only PDB of the model, for TM-align validation (format-safe). */
+  modelCaPdb?: string;
+  /** CA-only PDB of the reference chain, for TM-align validation. */
+  refCaPdb?: string;
+
+  // --- legacy fields (read-only back-compat) ---
+  afPdbText?: string;
+  expCifText?: string;
+}
+
+/** Map any stored record (incl. legacy) to the current shape. */
+export function normalizeStored(s: StoredStructures): StoredStructures {
+  if (s.modelText) return s;
+  return {
+    ...s,
+    modelText: s.afPdbText ?? "",
+    modelFormat: "pdb",
+    refText: s.expCifText ?? "",
+    refFormat: "cif",
+  };
 }

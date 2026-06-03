@@ -12,6 +12,7 @@ function entry(id: string, updatedAt: number, fav = false): WorkspaceEntry {
     pdbId: id.split(":")[1],
     chain: "A",
     query: "q",
+    source: "database",
     createdAt: updatedAt,
     updatedAt,
     favorite: fav,
@@ -59,8 +60,10 @@ describe("workspace db (IndexedDB via fake-indexeddb)", () => {
     await db.putEntry(entry("A:1:A", 100));
     const s: StoredStructures = {
       id: "A:1:A",
-      afPdbText: "AF",
-      expCifText: "CIF",
+      modelText: "AF",
+      modelFormat: "pdb",
+      refText: "CIF",
+      refFormat: "cif",
       superposition: { rotation: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], centroidP: [0, 0, 0], centroidQ: [0, 0, 0] },
     };
     await db.putStructures(s);
@@ -72,12 +75,14 @@ describe("workspace db (IndexedDB via fake-indexeddb)", () => {
   it("stores and retrieves heavy structures separately", async () => {
     await db.putStructures({
       id: "A:1:A",
-      afPdbText: "ATOM ...",
-      expCifText: "data_...",
+      modelText: "ATOM ...",
+      modelFormat: "pdb",
+      refText: "data_...",
+      refFormat: "cif",
       superposition: { rotation: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], centroidP: [0, 0, 0], centroidQ: [0, 0, 0] },
     });
     const got = await db.getStructures("A:1:A");
-    expect(got?.afPdbText).toBe("ATOM ...");
+    expect(got?.modelText).toBe("ATOM ...");
   });
 
   it("clears everything", async () => {

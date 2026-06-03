@@ -11,6 +11,7 @@ function entry(p: Partial<WorkspaceEntry> = {}): WorkspaceEntry {
     pdbId: "2OCJ",
     chain: "A",
     query: "p53",
+    source: "database",
     createdAt: 0,
     updatedAt: 1700000000000,
     favorite: false,

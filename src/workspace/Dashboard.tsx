@@ -2,10 +2,11 @@
  * Workspace dashboard: every saved comparison, with favorites, search, sortable
  * columns, per-row open/favorite/delete, and bulk export to Excel/CSV (SPEC §10).
  */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { WorkspaceEntry } from "./types.ts";
 import type { Workspace } from "./useWorkspace.ts";
-import { exportEntriesXlsx, exportEntriesCsv } from "./export.ts";
+import { exportEntriesXlsx, exportEntriesCsv, downloadWorkspaceBackup, exportEntriesLogs } from "./export.ts";
+import { parseWorkspace } from "./backup.ts";
 
 type SortKey = "proteinName" | "rmsd" | "tmScore" | "gdtTs" | "plddtErrorSpearman" | "nMatched" | "updatedAt";
 
@@ -14,6 +15,17 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
   const [asc, setAsc] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
+
+  async function handleImport(file: File) {
+    try {
+      const entries = parseWorkspace(await file.text());
+      const n = await ws.importEntries(entries);
+      alert(`Imported ${n} comparison${n === 1 ? "" : "s"}.`);
+    } catch (e) {
+      alert(`Import failed: ${(e as Error).message}`);
+    }
+  }
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -45,11 +57,29 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
   }
   const arrow = (key: SortKey) => (key === sortKey ? (asc ? " ▲" : " ▼") : "");
 
+  const importInput = (
+    <input
+      ref={importRef}
+      type="file"
+      accept=".json,application/json"
+      style={{ display: "none" }}
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (f) void handleImport(f);
+        e.target.value = "";
+      }}
+    />
+  );
+
   if (ws.entries.length === 0) {
     return (
       <div className="empty">
         <p>No saved comparisons yet.</p>
         <p className="muted">Run a comparison and it will appear here automatically.</p>
+        <p>
+          {importInput}
+          <button onClick={() => importRef.current?.click()}>Import workspace JSON</button>
+        </p>
       </div>
     );
   }
@@ -73,6 +103,16 @@ export function Dashboard({ ws, onOpen }: { ws: Workspace; onOpen: (e: Workspace
           Export Excel
         </button>
         <button onClick={() => exportEntriesCsv(rows, favOnly ? "favorites" : "comparisons")}>Export CSV</button>
+        <button onClick={() => exportEntriesLogs(rows, favOnly ? "favorites-logs" : "logs")} title="Replication logs (provenance + methods)">
+          Export logs
+        </button>
+        <button onClick={() => downloadWorkspaceBackup(ws.entries)} title="Back up all comparisons as JSON">
+          Backup JSON
+        </button>
+        {importInput}
+        <button onClick={() => importRef.current?.click()} title="Import a workspace JSON backup">
+          Import
+        </button>
         <button
           className="danger"
           onClick={() => {

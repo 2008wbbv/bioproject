@@ -111,6 +111,21 @@ Checkboxes reflect actual repo state.
       state; each AlphaFold-DB hit opens as a new comparison.
 - [ ] Self-hosted MMseqs2-App upgrade path — documented in SPEC §11 (not built).
 
+## Product features (OpenFoldUI) ✅ DONE
+
+- [x] Rebrand to **OpenFoldUI**.
+- [x] **Upload your own files**: compare a local model (PDB/CIF, pLDDT in B-factor)
+      vs a local or fetched reference (`UploadPanel`, `runCustomComparison`,
+      `engine/format.ts`). Format-aware viewer + format-safe TM-align validation
+      (CA-only PDBs precomputed).
+- [x] **Confidence analysis** (`engine/analysis.ts`, `ConfidenceSummary`): pLDDT
+      bands, agreement stats, and a "confidently wrong" worst-residues table.
+- [x] **Download superposed model** (PDB) for use in external tools.
+- [x] **Workspace backup**: export/import the workspace as JSON (`backup.ts`).
+- [x] **Batch**: load an ID list from a file.
+- [x] **Replication logs** (`log.ts`): per-comparison + bulk provenance + methods
+      text, so analyses can be reproduced.
+
 ## Toolchain follow-ups
 
 - [ ] Bump vite/vitest to clear the dev-only audit advisories (vite 6 / vitest 3).

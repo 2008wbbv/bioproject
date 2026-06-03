@@ -51,6 +51,13 @@ export async function putEntry(entry: WorkspaceEntry): Promise<void> {
   await db.put("comparisons", entry);
 }
 
+/** Insert/replace many entries in one transaction (used by JSON import). */
+export async function putEntries(entries: WorkspaceEntry[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction("comparisons", "readwrite");
+  await Promise.all([...entries.map((e) => tx.store.put(e)), tx.done]);
+}
+
 export async function getEntry(id: string): Promise<WorkspaceEntry | undefined> {
   const db = await getDB();
   return db.get("comparisons", id);

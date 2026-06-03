@@ -5,11 +5,13 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineResult } from "../api/pipeline.ts";
-import type { StoredStructures, WorkspaceEntry } from "./types.ts";
+import { normalizeStored, type StoredStructures, type WorkspaceEntry } from "./types.ts";
+import { APP_VERSION } from "../version.ts";
 import * as db from "./db.ts";
 
-export function entryId(uniprot: string, pdbId: string, chain: string): string {
-  return `${uniprot}:${pdbId}:${chain}`;
+export function entryId(uniprot: string, pdbId: string, chain: string, source: string): string {
+  const base = `${uniprot}:${pdbId}:${chain}`;
+  return source === "upload" ? `custom:${base}` : base;
 }
 
 /** Build a fresh entry from a pipeline result (annotations default empty). */
@@ -17,12 +19,13 @@ export function entryFromResult(query: string, data: PipelineResult): WorkspaceE
   const r = data.result;
   const now = Date.now();
   return {
-    id: entryId(r.uniprot, r.pdbId, data.chosenChain),
+    id: entryId(r.uniprot, r.pdbId, data.chosenChain, data.source),
     uniprot: r.uniprot,
     proteinName: data.proteinName,
     pdbId: r.pdbId,
     chain: data.chosenChain,
     query,
+    source: data.source,
     createdAt: now,
     updatedAt: now,
     favorite: false,
@@ -34,6 +37,11 @@ export function entryFromResult(query: string, data: PipelineResult): WorkspaceE
     nMatched: r.nMatched,
     warnings: r.warnings,
     perResidue: r.perResidue,
+    provenance: {
+      appVersion: APP_VERSION,
+      modelSource: data.modelSource,
+      refSource: data.refSource,
+    },
   };
 }
 
@@ -45,6 +53,7 @@ export interface Workspace {
   setNotes: (id: string, notes: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
   clear: () => Promise<void>;
+  importEntries: (entries: WorkspaceEntry[]) => Promise<number>;
   loadStructures: (id: string) => Promise<StoredStructures | undefined>;
 }
 
@@ -83,8 +92,12 @@ export function useWorkspace(): Workspace {
       await db.putEntry(entry);
       await db.putStructures({
         id: entry.id,
-        afPdbText: data.afPdbText,
-        expCifText: data.expCifText,
+        modelText: data.modelText,
+        modelFormat: data.modelFormat,
+        refText: data.refText,
+        refFormat: data.refFormat,
+        modelCaPdb: data.modelCaPdb,
+        refCaPdb: data.refCaPdb,
         superposition: data.superposition,
       });
       upsertLocal(entry);
@@ -125,7 +138,17 @@ export function useWorkspace(): Workspace {
     setEntries([]);
   }, []);
 
-  const loadStructures = useCallback((id: string) => db.getStructures(id), []);
+  const importEntries = useCallback(async (incoming: WorkspaceEntry[]) => {
+    await db.putEntries(incoming);
+    const all = await db.getAllEntries();
+    setEntries(all);
+    return incoming.length;
+  }, []);
 
-  return { entries, ready, saveResult, toggleFavorite, setNotes, remove, clear, loadStructures };
+  const loadStructures = useCallback(async (id: string) => {
+    const s = await db.getStructures(id);
+    return s ? normalizeStored(s) : undefined;
+  }, []);
+
+  return { entries, ready, saveResult, toggleFavorite, setNotes, remove, clear, importEntries, loadStructures };
 }

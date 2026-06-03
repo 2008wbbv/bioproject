@@ -1,9 +1,9 @@
 {
-  "name": "alphafold-vs-experimental",
+  "name": "openfoldui",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Client-only tool to compare AlphaFold predictions against experimental structures (RMSD, TM-score, GDT-TS, per-residue deviation, pLDDT-vs-error).",
+  "description": "OpenFoldUI — client-only tool to compare predicted (AlphaFold or your own files) vs experimental protein structures: RMSD, TM-score, GDT-TS, per-residue deviation, pLDDT-vs-error, with a workspace, batch mode, structure search, and Excel export.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

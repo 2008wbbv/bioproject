@@ -4,7 +4,7 @@
  * and export to Excel/CSV. Persistence is IndexedDB (src/workspace).
  */
 import { lazy, Suspense, useMemo, useState } from "react";
-import { runComparison } from "./api/pipeline.ts";
+import { runComparison, runCustomComparison, type PipelineResult, type UploadedFile } from "./api/pipeline.ts";
 import type { RankedStructure } from "./api/pdbe.ts";
 import { ApiError } from "./api/errors.ts";
 import { ScatterPlddtDeviation } from "./charts/ScatterPlddtDeviation.tsx";
@@ -14,14 +14,31 @@ import { ViewerErrorBoundary } from "./viewer/ErrorBoundary.tsx";
 import { prepareViewerModels } from "./viewer/prepareModels.ts";
 import { DataSheet } from "./components/DataSheet.tsx";
 import { NotesEditor } from "./components/NotesEditor.tsx";
+import { ConfidenceSummary } from "./components/ConfidenceSummary.tsx";
+import { UploadPanel } from "./components/UploadPanel.tsx";
 import { SearchPanel } from "./search/SearchPanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
-import { exportEntryXlsx, exportEntryCsv } from "./workspace/export.ts";
+import { exportEntryXlsx, exportEntryCsv, exportEntryLog } from "./workspace/export.ts";
+import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import "./styles.css";
+
+/** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
+function structuresOf(id: string, data: PipelineResult): StoredStructures {
+  return {
+    id,
+    modelText: data.modelText,
+    modelFormat: data.modelFormat,
+    refText: data.refText,
+    refFormat: data.refFormat,
+    modelCaPdb: data.modelCaPdb,
+    refCaPdb: data.refCaPdb,
+    superposition: data.superposition,
+  };
+}
 
 const MolstarViewer = lazy(() =>
   import("./viewer/MolstarViewer.tsx").then((m) => ({ default: m.MolstarViewer })),
@@ -45,6 +62,7 @@ const EXAMPLES = [
 export function App() {
   const ws = useWorkspace();
   const [view, setView] = useState<View>("compare");
+  const [compareMode, setCompareMode] = useState<"database" | "upload">("database");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -59,19 +77,26 @@ export function App() {
     try {
       const data = await runComparison(trimmed, pdbId ? { pdbId } : {});
       const entry = await ws.saveResult(trimmed, data);
-      setActive({
-        id: entry.id,
-        structures: {
-          id: entry.id,
-          afPdbText: data.afPdbText,
-          expCifText: data.expCifText,
-          superposition: data.superposition,
-        },
-        alternatives: data.alternatives,
-      });
+      setActive({ id: entry.id, structures: structuresOf(entry.id, data), alternatives: data.alternatives });
       setStatus("done");
     } catch (e) {
       setError(e instanceof ApiError ? `${e.source}: ${e.message}` : (e as Error).message);
+      setStatus("error");
+    }
+  }
+
+  async function runUpload(model: UploadedFile, ref: UploadedFile, uniprot?: string) {
+    setStatus("loading");
+    setError("");
+    setView("compare");
+    try {
+      const data = runCustomComparison(model, ref, uniprot ? { uniprot } : {});
+      const label = `${model.name} vs ${ref.name}`;
+      const entry = await ws.saveResult(label, data);
+      setActive({ id: entry.id, structures: structuresOf(entry.id, data) });
+      setStatus("done");
+    } catch (e) {
+      setError((e as Error).message);
       setStatus("error");
     }
   }
@@ -90,10 +115,10 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <div>
-          <h1>AlphaFold vs Experimental</h1>
+          <h1>OpenFoldUI</h1>
           <p className="tagline">
-            How well does AlphaFold match the real structure — and where was it{" "}
-            <em>confidently wrong</em>?
+            Compare a predicted structure against the real one — and see where the model was{" "}
+            <em>confidently wrong</em>. AlphaFold-DB or your own files.
           </p>
         </div>
         <nav className="nav">
@@ -111,33 +136,48 @@ export function App() {
 
       {view === "compare" && (
         <>
-          <form
-            className="search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(query);
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Protein name or UniProt accession (e.g. p53 or P04637)"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Protein name or UniProt accession"
-            />
-            <button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Comparing…" : "Compare"}
+          <div className="mode-tabs">
+            <button className={compareMode === "database" ? "on" : ""} onClick={() => setCompareMode("database")}>
+              From database
             </button>
-          </form>
-
-          <div className="examples">
-            <span className="muted">Try:</span>
-            {EXAMPLES.map((ex) => (
-              <button key={ex.query} className="link" type="button" onClick={() => { setQuery(ex.query); void run(ex.query); }}>
-                {ex.label}
-              </button>
-            ))}
+            <button className={compareMode === "upload" ? "on" : ""} onClick={() => setCompareMode("upload")}>
+              Upload files
+            </button>
           </div>
+
+          {compareMode === "database" ? (
+            <>
+              <form
+                className="search"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void run(query);
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Protein name or UniProt accession (e.g. p53 or P04637)"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Protein name or UniProt accession"
+                />
+                <button type="submit" disabled={status === "loading"}>
+                  {status === "loading" ? "Comparing…" : "Compare"}
+                </button>
+              </form>
+
+              <div className="examples">
+                <span className="muted">Try:</span>
+                {EXAMPLES.map((ex) => (
+                  <button key={ex.query} className="link" type="button" onClick={() => { setQuery(ex.query); void run(ex.query); }}>
+                    {ex.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <UploadPanel onCompare={runUpload} busy={status === "loading"} />
+          )}
 
           {status === "loading" && <p className="status">Fetching structures and computing…</p>}
           {status === "error" && <p className="status error">{error}</p>}
@@ -162,7 +202,7 @@ export function App() {
 
       <footer className="app-footer">
         <span className="muted">
-          Native TypeScript engine · client-only · metrics computed in-browser · saved to IndexedDB.
+          OpenFoldUI · native TypeScript engine · client-only · metrics computed in-browser · saved locally (IndexedDB).
         </span>
       </footer>
     </div>
@@ -189,10 +229,29 @@ function Results({
   const [mode, setMode] = useState<ColorMode>("deviation");
   const [showSheet, setShowSheet] = useState(false);
 
+  // The B-factor coloring trick needs a PDB model; for CIF models the viewer is
+  // skipped (metrics/charts are unaffected).
   const models = useMemo(
-    () => (structures ? prepareViewerModels(structures.afPdbText, structures.superposition, entry.perResidue) : null),
+    () =>
+      structures && structures.modelFormat === "pdb"
+        ? prepareViewerModels(structures.modelText, structures.superposition, entry.perResidue)
+        : null,
     [structures, entry.perResidue],
   );
+
+  function downloadSuperposed() {
+    if (!structures || structures.modelFormat !== "pdb") return;
+    const pdb = transformPdb(structures.modelText, structures.superposition);
+    const blob = new Blob([pdb], { type: "chemical/x-pdb" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${entry.uniprot}_${entry.pdbId}_superposed.pdb`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   return (
     <section className="results">
@@ -225,6 +284,14 @@ function Results({
           <div className="export-group">
             <button onClick={() => exportEntryXlsx(entry)}>Export Excel</button>
             <button onClick={() => exportEntryCsv(entry)}>CSV</button>
+            <button onClick={() => exportEntryLog(entry)} title="Provenance + methods to replicate this">
+              Log
+            </button>
+            {structures && structures.modelFormat === "pdb" && (
+              <button onClick={downloadSuperposed} title="Download the model superposed onto the reference">
+                Superposed PDB
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -254,6 +321,8 @@ function Results({
         <DeviationTrack perResidue={entry.perResidue} />
       </div>
 
+      <ConfidenceSummary perResidue={entry.perResidue} />
+
       <NotesEditor value={entry.notes} onSave={onNotes} />
 
       <div className="sheet-toggle">
@@ -281,6 +350,8 @@ function Results({
                 {mode === "deviation" ? "disagree" : "low confidence"}
               </span>
             </>
+          ) : structures && structures.modelFormat !== "pdb" ? (
+            <span className="muted">3D coloring overlay is available for PDB models (metrics/charts unaffected).</span>
           ) : (
             <span className="muted">Structures not cached for this entry — re-run to view in 3D.</span>
           )}
@@ -288,24 +359,22 @@ function Results({
         {models && structures && (
           <ViewerErrorBoundary>
             <Suspense fallback={<div className="viewer-error">Loading 3D viewer…</div>}>
-              <MolstarViewer models={models} expCifText={structures.expCifText} mode={mode} />
+              <MolstarViewer models={models} refText={structures.refText} refFormat={structures.refFormat} mode={mode} />
             </Suspense>
           </ViewerErrorBoundary>
         )}
       </div>
 
-      {structures && (
+      {structures?.modelCaPdb && structures.refCaPdb && (
         <ValidationPanel
-          afPdbText={structures.afPdbText}
-          expCifText={structures.expCifText}
-          uniprot={entry.uniprot}
-          chain={entry.chain}
+          modelCaPdb={structures.modelCaPdb}
+          refCaPdb={structures.refCaPdb}
           nativeTm={entry.tmScore}
           nativeRmsd={entry.rmsd}
         />
       )}
 
-      {structures && <SearchPanel afPdbText={structures.afPdbText} onOpenAccession={onCompareAccession} />}
+      {structures && <SearchPanel afPdbText={structures.modelText} onOpenAccession={onCompareAccession} />}
     </section>
   );
 }

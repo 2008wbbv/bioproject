@@ -1,10 +1,14 @@
 /**
- * The end-to-end comparison pipeline (SPEC §1): an id/name in, a ComparisonResult
- * (plus everything the viewer needs) out. This is the one place the api layer and
- * the engine meet; components call `runComparison` and render the result.
+ * The end-to-end comparison pipeline (SPEC §1): structures in, a ComparisonResult
+ * (plus everything the viewer/validation/export need) out. Two entry points share
+ * one assembler:
+ *   - runComparison(query)        — fetch by UniProt/name from the databases
+ *   - runCustomComparison(files)  — compare user-uploaded files (OpenFoldUI upload)
  */
 import { parsePdb } from "../engine/parse.ts";
 import { parseCif } from "../engine/parseCif.ts";
+import { parseByFormat, type StructFormat } from "../engine/format.ts";
+import { caPdbFromResidues } from "../engine/writePdb.ts";
 import {
   applySifts,
   assignUniprotFromAuth,
@@ -13,7 +17,8 @@ import {
 } from "../engine/sifts.ts";
 import { alignByUniprot } from "../engine/align.ts";
 import { computeComparison } from "../engine/compare.ts";
-import type { ComparisonResult, ResidueRecord, Superposition } from "../engine/types.ts";
+import type { ComparisonResult, ParsedStructure, ResidueRecord } from "../engine/types.ts";
+import type { ComparisonSource } from "../workspace/types.ts";
 import { resolveUniprot, type UniprotHit } from "./uniprot.ts";
 import { fetchAlphaFold } from "./alphafold.ts";
 import { fetchBestStructures, fetchSiftsMappings, type RankedStructure } from "./pdbe.ts";
@@ -21,24 +26,29 @@ import { fetchExperimentalStructure } from "./structure.ts";
 
 export interface PipelineResult {
   result: ComparisonResult;
-  superposition: Superposition;
-  /** Raw AlphaFold model text (.pdb), for the viewer. */
-  afPdbText: string;
-  /** Raw experimental mmCIF text, for the viewer. */
-  expCifText: string;
-  /** Resolved protein display name. */
+  superposition: import("../engine/types.ts").Superposition;
+  /** Predicted-model file text + format (for the viewer). */
+  modelText: string;
+  modelFormat: StructFormat;
+  /** Reference file text + format (for the viewer). */
+  refText: string;
+  refFormat: StructFormat;
+  /** CA-only PDBs for format-safe TM-align validation. */
+  modelCaPdb: string;
+  refCaPdb: string;
   proteinName: string;
-  /** The experimental structure that was used. */
-  chosenStructure: RankedStructure;
-  /** Chain of the experimental structure that was compared. */
   chosenChain: string;
-  /** All ranked structures, so the UI can offer an override. */
-  alternatives: RankedStructure[];
-  /** UniProt disambiguation candidates (empty if resolved from an accession). */
-  candidates: UniprotHit[];
+  source: ComparisonSource;
+  /** Where the model/reference came from, for the replication log. */
+  modelSource: string;
+  refSource: string;
+  /** Ranked structures for the override dropdown (database flow only). */
+  alternatives?: RankedStructure[];
+  /** UniProt disambiguation candidates (database flow only). */
+  candidates?: UniprotHit[];
 }
 
-/** Choose the experimental chain with the most UniProt-mapped CA residues. */
+/** Choose the chain with the most UniProt-mapped CA residues. */
 export function pickBestChain(residues: ResidueRecord[]): string | null {
   const counts = new Map<string, number>();
   for (const r of residues) {
@@ -46,7 +56,6 @@ export function pickBestChain(residues: ResidueRecord[]): string | null {
   }
   let best: string | null = null;
   let bestN = -1;
-  // Deterministic: highest count, then lexicographically smallest chain id.
   for (const [chain, n] of [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     if (n > bestN) {
       best = chain;
@@ -56,61 +65,43 @@ export function pickBestChain(residues: ResidueRecord[]): string | null {
   return best;
 }
 
-export interface RunOptions {
-  /** Override the auto-picked experimental structure with a specific PDB id. */
-  pdbId?: string;
+interface AssembleMeta {
+  uniprot: string;
+  proteinName: string;
+  pdbId: string;
+  source: ComparisonSource;
+  modelText: string;
+  modelFormat: StructFormat;
+  refText: string;
+  refFormat: StructFormat;
+  modelSource: string;
+  refSource: string;
+  extraWarnings?: string[];
 }
 
-export async function runComparison(query: string, opts: RunOptions = {}): Promise<PipelineResult> {
-  // 1. Resolve to a UniProt accession.
-  const resolved = await resolveUniprot(query);
-  const accession = resolved.accession;
+/**
+ * Shared core: given a parsed model and reference (both with `uniprotNum` assigned),
+ * pick the best reference chain, align, compute every metric, and package the
+ * result with the texts + CA-only PDBs the UI needs.
+ */
+function assembleComparison(
+  model: ParsedStructure,
+  ref: ParsedStructure,
+  meta: AssembleMeta,
+): PipelineResult {
+  const chosenChain = pickBestChain(ref.residues) ?? ref.residues[0]?.chain ?? "A";
+  const chainResidues = ref.residues.filter((r) => r.chain === chosenChain);
 
-  // 2. Best experimental structures (ranked), then pick.
-  const alternatives = await fetchBestStructures(accession);
-  const chosen =
-    (opts.pdbId && alternatives.find((s) => s.pdb_id.toLowerCase() === opts.pdbId!.toLowerCase())) ||
-    alternatives[0];
-
-  // 3. Fetch AlphaFold model and the experimental file in parallel.
-  const [af, exp] = await Promise.all([
-    fetchAlphaFold(accession),
-    fetchExperimentalStructure(chosen.pdb_id),
-  ]);
-
-  // 4. Parse. AlphaFold: numbered directly by UniProt.
-  const afParsed = parsePdb(af.pdbText);
-  assignUniprotFromAuth(afParsed.residues);
-
-  // Experimental: prefer per-atom SIFTS xref from the updated cif; else segments.
-  const expParsed = parseCif(exp.text, { uniprotAcc: accession });
-  const warnings: string[] = [];
-  if (!exp.hasSiftsXref || expParsed.residues.every((r) => r.uniprotNum === null)) {
-    let segments = [] as ReturnType<typeof extractSiftsSegments>;
-    try {
-      segments = extractSiftsSegments(await fetchSiftsMappings(chosen.pdb_id), chosen.pdb_id);
-    } catch {
-      // mappings unavailable; fall through to best_structures-derived segment
-    }
-    if (segments.length === 0) segments = segmentsFromBestStructure(chosen);
-    applySifts(expParsed.residues, segments);
-    warnings.push("UniProt numbering resolved via SIFTS segments (no per-atom xref).");
-  }
-
-  // 5. Best-chain selection, then restrict experimental residues to that chain.
-  const chosenChain = pickBestChain(expParsed.residues) ?? expParsed.residues[0]?.chain ?? "A";
-  const chainResidues = expParsed.residues.filter((r) => r.chain === chosenChain);
-
-  // 6. Align + compare. Reference length = monomer length (unique UniProt residues).
-  const alignment = alignByUniprot(afParsed.residues, chainResidues);
+  const alignment = alignByUniprot(model.residues, chainResidues);
   const referenceLength = new Set(
     chainResidues.filter((r) => r.uniprotNum !== null && r.caXyz).map((r) => r.uniprotNum),
   ).size;
   const metrics = computeComparison(alignment, { referenceLength });
 
-  // 7. Warnings: holo (apo/holo, SPEC §8) and degenerate cases.
-  warnings.push(...expParsed.warnings, ...afParsed.warnings);
-  if (metrics.nMatched < 10) {
+  const warnings = [...(meta.extraWarnings ?? []), ...ref.warnings, ...model.warnings];
+  if (metrics.nMatched === 0) {
+    warnings.push("No residues matched — check that both files are the same protein and numbering.");
+  } else if (metrics.nMatched < 10) {
     warnings.push(`Only ${metrics.nMatched} residues matched — interpret metrics with caution.`);
   }
   if (Number.isNaN(metrics.plddtErrorSpearman)) {
@@ -118,8 +109,8 @@ export async function runComparison(query: string, opts: RunOptions = {}): Promi
   }
 
   const result: ComparisonResult = {
-    uniprot: accession,
-    pdbId: chosen.pdb_id.toUpperCase(),
+    uniprot: meta.uniprot,
+    pdbId: meta.pdbId,
     nMatched: metrics.nMatched,
     rmsd: metrics.rmsd,
     tmScore: metrics.tmScore,
@@ -133,12 +124,117 @@ export async function runComparison(query: string, opts: RunOptions = {}): Promi
   return {
     result,
     superposition: metrics.superposition,
-    afPdbText: af.pdbText,
-    expCifText: exp.text,
-    proteinName: resolved.name,
-    chosenStructure: chosen,
+    modelText: meta.modelText,
+    modelFormat: meta.modelFormat,
+    refText: meta.refText,
+    refFormat: meta.refFormat,
+    modelCaPdb: caPdbFromResidues(model.residues),
+    refCaPdb: caPdbFromResidues(chainResidues, chosenChain),
+    proteinName: meta.proteinName,
     chosenChain,
-    alternatives,
-    candidates: resolved.candidates,
+    source: meta.source,
+    modelSource: meta.modelSource,
+    refSource: meta.refSource,
   };
+}
+
+export interface RunOptions {
+  /** Override the auto-picked experimental structure with a specific PDB id. */
+  pdbId?: string;
+}
+
+/** Database flow: name/accession → AlphaFold vs the best experimental structure. */
+export async function runComparison(query: string, opts: RunOptions = {}): Promise<PipelineResult> {
+  const resolved = await resolveUniprot(query);
+  const accession = resolved.accession;
+
+  const alternatives = await fetchBestStructures(accession);
+  const chosen =
+    (opts.pdbId && alternatives.find((s) => s.pdb_id.toLowerCase() === opts.pdbId!.toLowerCase())) ||
+    alternatives[0];
+
+  const [af, exp] = await Promise.all([
+    fetchAlphaFold(accession),
+    fetchExperimentalStructure(chosen.pdb_id),
+  ]);
+
+  const afParsed = parsePdb(af.pdbText);
+  assignUniprotFromAuth(afParsed.residues);
+
+  const expParsed = parseCif(exp.text, { uniprotAcc: accession });
+  const extraWarnings: string[] = [];
+  if (!exp.hasSiftsXref || expParsed.residues.every((r) => r.uniprotNum === null)) {
+    let segments = [] as ReturnType<typeof extractSiftsSegments>;
+    try {
+      segments = extractSiftsSegments(await fetchSiftsMappings(chosen.pdb_id), chosen.pdb_id);
+    } catch {
+      // mappings unavailable; fall through to best_structures-derived segment
+    }
+    if (segments.length === 0) segments = segmentsFromBestStructure(chosen);
+    applySifts(expParsed.residues, segments);
+    extraWarnings.push("UniProt numbering resolved via SIFTS segments (no per-atom xref).");
+  }
+
+  const assembled = assembleComparison(afParsed, expParsed, {
+    uniprot: accession,
+    proteinName: resolved.name,
+    pdbId: chosen.pdb_id.toUpperCase(),
+    source: "database",
+    modelText: af.pdbText,
+    modelFormat: "pdb",
+    refText: exp.text,
+    refFormat: "cif",
+    modelSource: `AlphaFold DB: ${af.modelUrl}`,
+    refSource: `${exp.source}: ${chosen.pdb_id.toUpperCase()}`,
+    extraWarnings,
+  });
+  assembled.alternatives = alternatives;
+  assembled.candidates = resolved.candidates;
+  return assembled;
+}
+
+export interface UploadedFile {
+  name: string;
+  text: string;
+  format: StructFormat;
+}
+
+export interface CustomOptions {
+  /** Optional UniProt accession, if the user wants to label/cross-reference it. */
+  uniprot?: string;
+}
+
+/**
+ * Upload flow: compare a user-provided predicted model against a user-provided
+ * reference. Both are assumed to share residue numbering (the same protein); the
+ * model's pLDDT lives in its B-factor column. Numbering comes from per-atom SIFTS
+ * xref if a CIF carries it, else the author numbering of each file.
+ */
+export function runCustomComparison(
+  model: UploadedFile,
+  ref: UploadedFile,
+  opts: CustomOptions = {},
+): PipelineResult {
+  const acc = opts.uniprot?.toUpperCase();
+  const modelParsed = parseByFormat(model.text, model.format, acc ? { uniprotAcc: acc } : {});
+  const refParsed = parseByFormat(ref.text, ref.format, acc ? { uniprotAcc: acc } : {});
+
+  // Use UniProt numbers if a file carried them (CIF xref); otherwise author numbers.
+  if (modelParsed.residues.every((r) => r.uniprotNum === null)) assignUniprotFromAuth(modelParsed.residues);
+  if (refParsed.residues.every((r) => r.uniprotNum === null)) assignUniprotFromAuth(refParsed.residues);
+
+  const assembled = assembleComparison(modelParsed, refParsed, {
+    uniprot: acc ?? "(uploaded)",
+    proteinName: `${model.name} vs ${ref.name}`,
+    pdbId: ref.name,
+    source: "upload",
+    modelText: model.text,
+    modelFormat: model.format,
+    refText: ref.text,
+    refFormat: ref.format,
+    modelSource: `uploaded file: ${model.name}`,
+    refSource: `uploaded file: ${ref.name}`,
+    extraWarnings: ["Uploaded files: residues aligned on shared numbering (assumed same protein)."],
+  });
+  return assembled;
 }
