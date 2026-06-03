@@ -26,6 +26,7 @@ import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
 import { SettingsPanel } from "./components/SettingsPanel.tsx";
+import { CompareTwo } from "./components/CompareTwo.tsx";
 import { useTheme } from "./useTheme.ts";
 import "./styles.css";
 
@@ -48,7 +49,7 @@ const MolstarViewer = lazy(() =>
 );
 
 type Status = "idle" | "loading" | "error" | "done";
-type View = "dashboard" | "compare" | "batch";
+type View = "dashboard" | "compare" | "batch" | "compare2";
 
 interface Active {
   id: string;
@@ -71,6 +72,7 @@ export function App() {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [active, setActive] = useState<Active | null>(null);
+  const [pair, setPair] = useState<[WorkspaceEntry, WorkspaceEntry] | null>(null);
 
   async function run(q: string, pdbId?: string) {
     const trimmed = q.trim();
@@ -217,8 +219,13 @@ export function App() {
           onOpen={openEntry}
           onQuickCompare={(q) => { setQuery(q); setCompareMode("database"); void run(q); }}
           onUpload={() => { setCompareMode("upload"); setView("compare"); }}
+          onCompareTwo={(a, b) => { setPair([a, b]); setView("compare2"); }}
           examples={EXAMPLES}
         />
+      )}
+
+      {view === "compare2" && pair && (
+        <CompareTwo a={pair[0]} b={pair[1]} onClose={() => setView("dashboard")} onOpen={openEntry} />
       )}
 
       {view === "batch" && <BatchView ws={ws} onOpen={openEntry} />}

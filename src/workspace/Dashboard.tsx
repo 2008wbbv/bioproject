@@ -24,14 +24,19 @@ export function Dashboard({
   onOpen,
   onQuickCompare,
   onUpload,
+  onCompareTwo,
   examples,
 }: {
   ws: Workspace;
   onOpen: (e: WorkspaceEntry) => void;
   onQuickCompare: (query: string) => void;
   onUpload: () => void;
+  onCompareTwo: (a: WorkspaceEntry, b: WorkspaceEntry) => void;
   examples: Array<{ label: string; query: string }>;
 }) {
+  const [selected, setSelected] = useState<string[]>([]);
+  const toggleSelect = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(-2)));
   const [favOnly, setFavOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState<string | null>(null);
@@ -191,6 +196,18 @@ export function Dashboard({
           <input type="checkbox" checked={favOnly} onChange={(e) => setFavOnly(e.target.checked)} /> ★ only
         </label>
         <div className="spacer" />
+        {selected.length === 2 && (
+          <button
+            className="primary compare-sel"
+            onClick={() => {
+              const a = ws.entries.find((e) => e.id === selected[0]);
+              const b = ws.entries.find((e) => e.id === selected[1]);
+              if (a && b) onCompareTwo(a, b);
+            }}
+          >
+            Compare selected (2)
+          </button>
+        )}
         <span className="muted">{rows.length} shown</span>
         <button onClick={() => exportEntriesXlsx(rows, favOnly ? "favorites" : "comparisons")}>Export Excel</button>
         <button onClick={() => exportEntriesCsv(rows, favOnly ? "favorites" : "comparisons")}>CSV</button>
@@ -207,6 +224,7 @@ export function Dashboard({
         <table>
           <thead>
             <tr>
+              <th title="Select up to 2 to compare"></th>
               <th></th>
               <th onClick={() => sortBy("proteinName")}>Protein{arrow("proteinName")}</th>
               <th>PDB</th>
@@ -222,7 +240,10 @@ export function Dashboard({
           </thead>
           <tbody>
             {rows.map((e) => (
-              <tr key={e.id}>
+              <tr key={e.id} className={selected.includes(e.id) ? "row-selected" : ""}>
+                <td className="fav-cell">
+                  <input type="checkbox" checked={selected.includes(e.id)} onChange={() => toggleSelect(e.id)} title="Select to compare" />
+                </td>
                 <td className="fav-cell">
                   <button className={`star ${e.favorite ? "on" : ""}`} title={e.favorite ? "Unfavorite" : "Favorite"} onClick={() => void ws.toggleFavorite(e.id)}>
                     {e.favorite ? "★" : "☆"}

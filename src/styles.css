@@ -886,3 +886,16 @@ button.star:not(.on) {
   background: var(--panel);
   color: var(--text);
 }
+
+/* --- side-by-side compare --- */
+.compare-two { margin-top: 1.5rem; }
+.compare-two .result-head button {
+  padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); color: var(--text); cursor: pointer;
+}
+.compare-table td, .compare-table th { padding: 0.4rem 1.2rem 0.4rem 0; }
+.delta-good { color: #15803d; font-weight: 600; }
+.delta-bad { color: var(--danger); font-weight: 600; }
+.compare-sel { padding: 0.35rem 0.8rem; border: none; border-radius: 8px; background: var(--accent); color: white; cursor: pointer; }
+tr.row-selected { background: #eff6ff; }
+:root[data-theme="dark"] tr.row-selected { background: #0b2545; }
