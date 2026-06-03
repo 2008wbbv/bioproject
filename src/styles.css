@@ -429,3 +429,68 @@ button.star:not(.on) {
   margin-top: 4rem;
   text-align: center;
 }
+
+/* --- batch --- */
+.batch {
+  margin-top: 1.5rem;
+}
+.batch h2 {
+  margin: 0 0 0.25rem;
+}
+.batch-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88rem;
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+.batch-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.75rem 0;
+}
+.batch-controls .primary,
+.batch .primary {
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.batch-controls .primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.progress {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.5rem 0 1.25rem;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+.batch-table {
+  margin-top: 0.5rem;
+}
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.badge-pending { background: #f1f5f9; color: #64748b; }
+.badge-running { background: #dbeafe; color: #1d4ed8; }
+.badge-done    { background: #dcfce7; color: #15803d; }
+.badge-error   { background: #fee2e2; color: #b91c1c; }

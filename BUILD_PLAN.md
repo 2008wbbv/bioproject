@@ -79,11 +79,20 @@ Checkboxes reflect actual repo state.
 - [ ] Side-by-side native-vs-TM-align validation panel; assert agreement in tests.
 - [ ] Add iterative TM refinement only if validation shows the plain value drifts.
 
-## Phase 4 — Cache + batch (`src/cache/`, `src/batch/`)
+## Phase 4 — Cache + batch ✅ DONE
 
-- [ ] IndexedDB via `idb`: raw files + results keyed `{uniprot}:{pdbId}:{backend}`.
-- [ ] Web Worker pool; live progress; sortable/filterable table; CSV export.
-- [ ] Charts: Observable Plot scatter (single) + distributions (batch).
+- [x] IndexedDB via `idb` (`src/workspace/db.ts`): comparisons keyed
+      `{uniprot}:{pdbId}:{chain}` + a separate `structures` store. (This is the
+      workspace; it also covers caching.)
+- [x] Batch (`src/batch/`): `parseIds.ts`, a bounded-concurrency promise pool
+      (`pool.ts`), `runBatch.ts` (saves each result to the workspace), and
+      `BatchView.tsx` with live progress + a per-item status table.
+- [x] Charts: single-protein scatter + per-residue track (Phase 2); batch TM-score
+      and RMSD distributions (`charts/Distributions.tsx`).
+- [x] Export: per-comparison and bulk (the workspace dashboard), .xlsx + .csv.
+- Note: a main-thread promise pool is used instead of a Web Worker pool — the
+  pipeline is network-bound, so workers wouldn't help; the pure engine stays
+  worker-ready if compute ever dominates.
 
 ## Phase 5 — Foldseek search (`src/search/`)
 

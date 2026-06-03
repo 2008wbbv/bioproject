@@ -15,6 +15,7 @@ import { prepareViewerModels } from "./viewer/prepareModels.ts";
 import { DataSheet } from "./components/DataSheet.tsx";
 import { NotesEditor } from "./components/NotesEditor.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
+import { BatchView } from "./batch/BatchView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv } from "./workspace/export.ts";
@@ -25,7 +26,7 @@ const MolstarViewer = lazy(() =>
 );
 
 type Status = "idle" | "loading" | "error" | "done";
-type View = "compare" | "workspace";
+type View = "compare" | "batch" | "workspace";
 
 interface Active {
   id: string;
@@ -97,6 +98,9 @@ export function App() {
           <button className={view === "compare" ? "on" : ""} onClick={() => setView("compare")}>
             Compare
           </button>
+          <button className={view === "batch" ? "on" : ""} onClick={() => setView("batch")}>
+            Batch
+          </button>
           <button className={view === "workspace" ? "on" : ""} onClick={() => setView("workspace")}>
             Workspace{ws.entries.length ? ` (${ws.entries.length})` : ""}
           </button>
@@ -148,6 +152,8 @@ export function App() {
           )}
         </>
       )}
+
+      {view === "batch" && <BatchView ws={ws} onOpen={openEntry} />}
 
       {view === "workspace" && <Dashboard ws={ws} onOpen={openEntry} />}
 
