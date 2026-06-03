@@ -14,6 +14,7 @@ import { ViewerErrorBoundary } from "./viewer/ErrorBoundary.tsx";
 import { prepareViewerModels } from "./viewer/prepareModels.ts";
 import { DataSheet } from "./components/DataSheet.tsx";
 import { NotesEditor } from "./components/NotesEditor.tsx";
+import { SearchPanel } from "./search/SearchPanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
@@ -148,6 +149,7 @@ export function App() {
               onPickStructure={(pdb) => run(liveEntry.query || liveEntry.uniprot, pdb)}
               onToggleFavorite={() => void ws.toggleFavorite(liveEntry.id)}
               onNotes={(n) => void ws.setNotes(liveEntry.id, n)}
+              onCompareAccession={(acc) => { setQuery(acc); void run(acc); }}
             />
           )}
         </>
@@ -173,6 +175,7 @@ function Results({
   onPickStructure,
   onToggleFavorite,
   onNotes,
+  onCompareAccession,
 }: {
   entry: WorkspaceEntry;
   structures?: StoredStructures;
@@ -180,6 +183,7 @@ function Results({
   onPickStructure: (pdbId: string) => void;
   onToggleFavorite: () => void;
   onNotes: (notes: string) => void;
+  onCompareAccession: (accession: string) => void;
 }) {
   const [mode, setMode] = useState<ColorMode>("deviation");
   const [showSheet, setShowSheet] = useState(false);
@@ -288,6 +292,8 @@ function Results({
           </ViewerErrorBoundary>
         )}
       </div>
+
+      {structures && <SearchPanel afPdbText={structures.afPdbText} onOpenAccession={onCompareAccession} />}
     </section>
   );
 }

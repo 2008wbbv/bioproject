@@ -94,11 +94,16 @@ Checkboxes reflect actual repo state.
   pipeline is network-bound, so workers wouldn't help; the pure engine stays
   worker-ready if compute ever dominates.
 
-## Phase 5 — Foldseek search (`src/search/`)
+## Phase 5 — Foldseek search (`src/search/`) ✅ DONE
 
-- [ ] De-risk spike against `search.foldseek.com`; degrade gracefully.
-- [ ] Hit list → open any hit as a new comparison.
-- [ ] Document the self-hosted MMseqs2-App upgrade path.
+- [x] De-risk spike: `search.foldseek.com` endpoints send CORS `*` and accept
+      browser submissions; ran a full real search (submit → poll → result) and
+      captured the JSON shape to build the parser.
+- [x] `foldseek.ts`: submit → poll (backoff + timeout) → parse results; typed
+      SearchError; pure parsing (target→accession, result flattening) unit-tested.
+- [x] `SearchPanel.tsx`: best-effort UI, degrades gracefully to an "unavailable"
+      state; each AlphaFold-DB hit opens as a new comparison.
+- [ ] Self-hosted MMseqs2-App upgrade path — documented in SPEC §11 (not built).
 
 ## Toolchain follow-ups
 
