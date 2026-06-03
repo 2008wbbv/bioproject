@@ -20,6 +20,7 @@ import { BatchView } from "./batch/BatchView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv } from "./workspace/export.ts";
+import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import "./styles.css";
 
 const MolstarViewer = lazy(() =>
@@ -292,6 +293,17 @@ function Results({
           </ViewerErrorBoundary>
         )}
       </div>
+
+      {structures && (
+        <ValidationPanel
+          afPdbText={structures.afPdbText}
+          expCifText={structures.expCifText}
+          uniprot={entry.uniprot}
+          chain={entry.chain}
+          nativeTm={entry.tmScore}
+          nativeRmsd={entry.rmsd}
+        />
+      )}
 
       {structures && <SearchPanel afPdbText={structures.afPdbText} onOpenAccession={onCompareAccession} />}
     </section>

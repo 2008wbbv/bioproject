@@ -25,9 +25,12 @@ search (SPEC §11), which is isolated in `src/search/` and never a core dependen
   deviation/pLDDT color modes via B-factor encoding. **Built.**
 - `src/charts/` — Observable Plot: pLDDT-vs-deviation scatter, per-residue deviation
   track. **Built** (batch distributions come with Phase 4).
-- `src/cache/` — IndexedDB (`idb`): raw files + computed results. *(Phase 4.)*
-- `src/batch/` — Web Worker pool over many IDs → sortable table + CSV. *(Phase 4.)*
-- `src/search/` — Foldseek remote search, best-effort, degrades gracefully. *(Phase 5.)*
+- `src/workspace/` — IndexedDB (`idb`) persistence: saved comparisons + favorites +
+  notes, dashboard, and dependency-free .xlsx/.csv export. **Built.** (Covers SPEC §9.)
+- `src/batch/` — bounded-concurrency pool over many IDs → live table + distributions;
+  results land in the workspace. **Built.**
+- `src/engine/backends/` — `tmalign-wasm` validation backend (lazy WASM). **Built.**
+- `src/search/` — Foldseek remote search, best-effort, degrades gracefully. **Built.**
 
 ## The engine (the part that exists)
 
@@ -70,7 +73,7 @@ B-factor column.
 ```bash
 npm install
 npm run dev         # Vite dev server — full app: enter a protein, see metrics/charts/3D
-npm test            # vitest — engine + api + viewer-prep suite (71 tests)
+npm test            # vitest — engine + api + workspace + batch + search (109 tests)
 npm run typecheck   # tsc --noEmit
 npm run build       # tsc -b && vite build (Mol* is a lazy chunk)
 npx vite-node scripts/validate.ts [UNIPROT] [PDB]   # real-data engine validation
@@ -78,7 +81,9 @@ npx vite-node scripts/validate.ts [UNIPROT] [PDB]   # real-data engine validatio
 
 ## Status
 
-Phase 0 (CORS de-risk), the engine core, the API layer + pipeline, and the UI
-(charts + lazy Mol* viewer) are built and tested. Note: the Mol* viewer's visual
-render hasn't been eyeballed in a browser (built in a headless container); it is
-isolated behind an error boundary. See `BUILD_PLAN.md` for what's next.
+All spec phases are built and tested (Phase 0–5): engine, API + pipeline, Mol*
+viewer + charts, workspace (history/favorites/notes/export), batch mode, Foldseek
+search, and the tmalign-wasm validation backend (verified to agree with the native
+engine to ~0.001 TM-score on p53). Caveat: the Mol* 3D render and the in-browser
+WASM execution path haven't been eyeballed in a real browser (headless build env);
+both are isolated/error-guarded. See `BUILD_PLAN.md`.

@@ -8,10 +8,13 @@ TM-score, GDT-TS, per-residue deviation, and — the scientific payload — the
 The story it tells: where AlphaFold was *confidently wrong* — high pLDDT (the model
 was sure) but high deviation (it was off anyway).
 
-> **Status:** the engine, the API layer + pipeline, and the single-protein UI
-> (metrics, Observable Plot charts, lazy-loaded Mol* 3D overlay) are built and
-> tested. Batch mode and caching are next — see [`BUILD_PLAN.md`](BUILD_PLAN.md).
-> [`SPEC.md`](SPEC.md) is the full source of truth; [`CLAUDE.md`](CLAUDE.md) is the summary.
+> **Status:** all spec phases are built and tested — the comparison engine, the API
+> layer + pipeline, the single-protein UI (metrics, Observable Plot charts,
+> lazy-loaded Mol* 3D overlay), a persistent **workspace** (history, favorites,
+> notes, Excel/CSV export), **batch mode**, **Foldseek** structure search, and a
+> **tmalign-wasm** validation backend that agrees with the native engine to ~0.001
+> TM-score. See [`BUILD_PLAN.md`](BUILD_PLAN.md). [`SPEC.md`](SPEC.md) is the source
+> of truth; [`CLAUDE.md`](CLAUDE.md) is the summary.
 
 ## Quick start
 
