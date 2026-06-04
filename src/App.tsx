@@ -137,6 +137,7 @@ export function App() {
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded());
   const [dashTag, setDashTag] = useState<string | null>(null);
   const [dashProject, setDashProject] = useState<string | null>(null);
+  const [inspectQuery, setInspectQuery] = useState<string | null>(null);
   const [viewedIds, setViewedIds] = useState<string[]>([]);
   const [backStack, setBackStack] = useState<Loc[]>([]);
   const prevLoc = useRef<Loc | null>(null);
@@ -414,6 +415,7 @@ export function App() {
               projectOptions={[...new Set(ws.entries.map((e) => e.project).filter((p): p is string => !!p))]}
               tagSuggestions={[...new Set(ws.entries.flatMap((e) => e.tags ?? []))]}
               onCompareAccession={(acc) => { setQuery(acc); void run(acc); }}
+              onInspect={(acc) => { setInspectQuery(acc); setView("inspect"); }}
             />
           )}
         </>
@@ -449,7 +451,10 @@ export function App() {
       {view === "learn" && <LearnView />}
 
       {view === "inspect" && (
-        <InspectView onCompare={(acc) => { setQuery(acc); setCompareMode("database"); void run(acc); }} />
+        <InspectView
+          initialQuery={inspectQuery}
+          onCompare={(acc) => { setQuery(acc); setCompareMode("database"); void run(acc); }}
+        />
       )}
 
           <footer className="app-footer">
@@ -491,6 +496,7 @@ function Results({
   projectOptions,
   tagSuggestions,
   onCompareAccession,
+  onInspect,
 }: {
   entry: WorkspaceEntry;
   structures?: StoredStructures;
@@ -504,6 +510,7 @@ function Results({
   projectOptions: string[];
   tagSuggestions: string[];
   onCompareAccession: (accession: string) => void;
+  onInspect: (accession: string) => void;
 }) {
   const { toast } = useToast();
   const [mode, setMode] = useState<ColorMode>("deviation");
@@ -565,6 +572,11 @@ function Results({
             {entry.source === "database" && (
               <button onClick={() => onCompareAccession(entry.query || entry.uniprot)} title="Re-fetch and recompute">
                 Re-run
+              </button>
+            )}
+            {entry.source === "database" && (
+              <button onClick={() => onInspect(entry.uniprot)} title="Inspect the AlphaFold model on its own">
+                Inspect model
               </button>
             )}
             {entry.source === "database" && (

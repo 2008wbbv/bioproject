@@ -24,12 +24,12 @@ interface Step {
 const STEPS: Step[] = [
   {
     icon: "flask",
-    title: "Welcome to OpenFoldUI",
+    title: "The AlphaFold companion",
     body: (
       <>
-        Compare a <strong>predicted</strong> protein structure — from AlphaFold, ESMFold, or your own file —
-        against the best <strong>experimental</strong> structure, and see exactly where they agree and disagree.
-        Everything runs in your browser; nothing is uploaded.
+        <strong>Inspect</strong> any AlphaFold model (confidence, disorder, PAE, domains) and{" "}
+        <strong>validate</strong> it against the real experimental structure — RMSD, TM-score, GDT-TS, lDDT —
+        to see exactly where they agree and disagree. Everything runs in your browser; nothing is uploaded.
       </>
     ),
   },

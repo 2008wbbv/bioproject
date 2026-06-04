@@ -177,9 +177,9 @@ export function Dashboard({
       <section className="dashboard">
         <div className="hero">
           <HeroArt />
-          <h2>Welcome to OpenFoldUI</h2>
+          <h2>OpenFoldUI — the AlphaFold companion</h2>
           <p className="muted">
-            Compare a predicted structure against the real one and see where the model was{" "}
+            Inspect, validate, and compare AlphaFold predictions. See where the model was{" "}
             <em>confidently wrong</em>. Everything runs in your browser.
           </p>
           {quickBar}

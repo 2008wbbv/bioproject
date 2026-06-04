@@ -4,7 +4,7 @@
  * bands, predicted disordered regions), PAE + domains, and a pLDDT-coloured 3D view.
  * The "companion" view: just look at what AlphaFold predicted.
  */
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { inspectModel, type InspectResult } from "../api/inspect.ts";
 import { fetchPae } from "../api/alphafold.ts";
 import { ApiError } from "../api/errors.ts";
@@ -23,8 +23,9 @@ const EXAMPLES = [
   { label: "TP53 (P04637)", q: "P04637" },
 ];
 
-export function InspectView({ onCompare }: { onCompare: (accession: string) => void }) {
+export function InspectView({ onCompare, initialQuery }: { onCompare: (accession: string) => void; initialQuery?: string | null }) {
   const [query, setQuery] = useState("");
+  const lastInit = useRef<string | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "done">("idle");
   const [error, setError] = useState("");
   const [data, setData] = useState<InspectResult | null>(null);
@@ -51,6 +52,16 @@ export function InspectView({ onCompare }: { onCompare: (accession: string) => v
       setStatus("error");
     }
   }
+
+  // Auto-run when opened with an accession (e.g. "Inspect model" from a comparison).
+  useEffect(() => {
+    if (initialQuery && initialQuery !== lastInit.current) {
+      lastInit.current = initialQuery;
+      setQuery(initialQuery);
+      void run(initialQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
 
   const plddts = useMemo(() => (data ? data.residues.map((r) => r.plddt) : []), [data]);
   const summary = useMemo(() => plddtSummary(plddts), [plddts]);

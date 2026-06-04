@@ -4,7 +4,10 @@
 
 <br/>
 
-**Compare a _predicted_ protein structure against the _experimental_ one — and see where the model was _confidently wrong_.**
+### The AlphaFold companion — inspect, validate, and compare AlphaFold predictions, entirely in your browser.
+
+**Inspect** any AlphaFold model (confidence, disorder, PAE, domains). **Validate** it against the real
+experimental structure (RMSD, TM-score, GDT-TS, lDDT). **See where it was _confidently wrong_.**
 
 [![tests](https://img.shields.io/badge/tests-198%20passing-22c55e)](#testing)
 [![architecture](https://img.shields.io/badge/architecture-client--only-2563eb)](#architecture)
@@ -17,11 +20,13 @@
 
 ---
 
-OpenFoldUI fetches an **AlphaFold** model (or takes **your own file**), pulls the best
-**experimental** structure of the same protein, superposes them, and quantifies the
-agreement — **RMSD, TM-score, GDT-TS, lDDT**, and the scientific payload: the
-**correlation between AlphaFold's confidence (pLDDT) and its actual per-residue
-error**. Everything runs in your browser. There is no backend.
+OpenFoldUI is a companion to **AlphaFold**. Point it at any protein and it will:
+
+- **Inspect** the AlphaFold model on its own — pLDDT confidence, predicted disordered regions, PAE, and domains — for *any* of the 200M+ proteins, no experimental structure required.
+- **Compare** it against the best **experimental** structure of the same protein — Kabsch superposition, **RMSD · TM-score · GDT-TS · lDDT**, and the scientific payload: the **correlation between AlphaFold's confidence (pLDDT) and its actual per-residue error**.
+- **Fold** a raw sequence (ESMFold, or your own AlphaFold/ColabFold endpoint) and feed it straight into a comparison.
+
+Everything runs in your browser. There is no backend.
 
 > The headline question it answers: *where was the model **confident but wrong*** —
 > high pLDDT yet far from the real structure.

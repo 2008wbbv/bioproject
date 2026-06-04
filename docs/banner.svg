@@ -28,8 +28,9 @@
   </g>
 
   <!-- title + tagline -->
-  <text x="70" y="190" fill="#ffffff" font-size="76" font-weight="800" letter-spacing="-1">OpenFoldUI</text>
-  <text x="72" y="232" fill="#93c5fd" font-size="26" font-weight="500">Compare predicted vs experimental protein structures — in your browser.</text>
+  <text x="70" y="178" fill="#ffffff" font-size="76" font-weight="800" letter-spacing="-1">OpenFoldUI</text>
+  <text x="72" y="214" fill="#7dd3fc" font-size="23" font-weight="700" letter-spacing="2">THE ALPHAFOLD COMPANION</text>
+  <text x="72" y="242" fill="#93c5fd" font-size="22" font-weight="500">Inspect, validate &amp; compare AlphaFold predictions — in your browser.</text>
 
   <!-- metric pills -->
   <g font-size="18" font-weight="600">

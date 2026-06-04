@@ -3,6 +3,7 @@
  * most want — residues where the model was confident but wrong.
  */
 import { plddtBands, confidentlyWrong, deviationStats, divergentRegions } from "../engine/analysis.ts";
+import { disorderedRegions } from "../engine/disorder.ts";
 import type { PerResidue } from "../engine/types.ts";
 import { useSettings } from "../settings.tsx";
 
@@ -12,6 +13,7 @@ export function ConfidenceSummary({ perResidue }: { perResidue: PerResidue[] }) 
   const stats = deviationStats(perResidue);
   const wrong = confidentlyWrong(perResidue, { plddtMin: settings.plddtConfident, devMin: settings.deviationWrong, limit: 12 });
   const regions = divergentRegions(perResidue, { devMin: settings.deviationWrong, minLen: 3 });
+  const disorder = disorderedRegions(perResidue);
   const pct = (n: number) => (bands.total ? ((n / bands.total) * 100).toFixed(0) : "0");
 
   return (
@@ -42,6 +44,13 @@ export function ConfidenceSummary({ perResidue }: { perResidue: PerResidue[] }) 
           </ul>
         </div>
       </div>
+
+      {disorder.length > 0 && (
+        <p className="muted small">
+          Predicted disordered (pLDDT &lt; 50): {disorder.map((d) => `${d.start}–${d.end}`).join(", ")} — low-confidence
+          regions are often genuinely flexible, so high deviation there may be expected.
+        </p>
+      )}
 
       {regions.length > 0 && (
         <>
