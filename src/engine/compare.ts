@@ -235,6 +235,62 @@ export function spearman(a: ArrayLike<number>, b: ArrayLike<number>): number {
   return pearson(rankData(a), rankData(b));
 }
 
+/**
+ * Iterative TM-score refinement (TM-align-style). Real TM-align doesn't just
+ * superpose on all residues — it re-superposes on the well-aligned core (residues
+ * within ~d0) and re-scores, which nudges the TM-score up. We do the same here
+ * natively (no WASM): repeatedly Kabsch-fit the subset within d0, recompute, and
+ * keep the best TM-score. Returns a value ≥ the plain TM-score.
+ */
+export function refineTmScore(
+  p: Float64Array,
+  q: Float64Array,
+  n: number,
+  referenceLength: number,
+  maxRounds = 20,
+): number {
+  if (n < 3) return 0;
+  const L = referenceLength;
+  const d0 = Math.max(0.5, 1.24 * Math.cbrt(L - 15) - 1.8);
+
+  // Start from the global superposition.
+  let sup = kabsch(p, q, n);
+  let dev = perResidueDeviations(applyTransform(p, sup, n), q, n);
+  let best = tmScore(dev, L);
+
+  for (let round = 0; round < maxRounds; round++) {
+    // Select the core: residues within d0 (grow the cutoff if too few).
+    let cutoff = d0;
+    let idx: number[] = [];
+    while (idx.length < 3 && cutoff < 100) {
+      idx = [];
+      for (let i = 0; i < n; i++) if (dev[i] < cutoff) idx.push(i);
+      cutoff *= 1.5;
+    }
+    if (idx.length < 3) break;
+
+    const sp = new Float64Array(idx.length * 3);
+    const sq = new Float64Array(idx.length * 3);
+    idx.forEach((src, k) => {
+      for (let c = 0; c < 3; c++) {
+        sp[k * 3 + c] = p[src * 3 + c];
+        sq[k * 3 + c] = q[src * 3 + c];
+      }
+    });
+    const newSup = kabsch(sp, sq, idx.length);
+    const newDev = perResidueDeviations(applyTransform(p, newSup, n), q, n);
+    const tm = tmScore(newDev, L);
+    if (tm <= best + 1e-6) {
+      best = Math.max(best, tm);
+      break; // converged
+    }
+    best = tm;
+    sup = newSup;
+    dev = newDev;
+  }
+  return best;
+}
+
 /** Metrics produced by the native engine for one matched alignment. */
 export interface ComparisonMetrics {
   nMatched: number;

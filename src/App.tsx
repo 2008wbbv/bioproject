@@ -671,6 +671,7 @@ function Results({
         <ValidationPanel
           modelCaPdb={structures.modelCaPdb}
           refCaPdb={structures.refCaPdb}
+          matched={structures.matched}
           nativeTm={entry.tmScore}
           nativeRmsd={entry.rmsd}
         />

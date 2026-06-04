@@ -7,25 +7,36 @@
  * panel shows an error and the rest of the app is unaffected (it is never a
  * dependency of the core metrics).
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { runTmalign, TmalignError, type TmalignResult } from "../engine/backends/tmalign.ts";
+import { refineTmScore } from "../engine/compare.ts";
+import type { MatchedCoords } from "../api/pipeline.ts";
 
 type Phase = "idle" | "running" | "done" | "error";
 
 export function ValidationPanel({
   modelCaPdb,
   refCaPdb,
+  matched,
   nativeTm,
   nativeRmsd,
 }: {
   modelCaPdb: string;
   refCaPdb: string;
+  matched?: MatchedCoords;
   nativeTm: number;
   nativeRmsd: number;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<TmalignResult | null>(null);
   const [error, setError] = useState("");
+
+  // Native iterative refinement (no WASM): re-superpose on the core, like TM-align.
+  const refinedTm = useMemo(() => {
+    if (!matched) return null;
+    const n = matched.uniprotNums.length;
+    return refineTmScore(Float64Array.from(matched.p), Float64Array.from(matched.q), n, n);
+  }, [matched]);
 
   async function validate() {
     setPhase("running");
@@ -57,6 +68,12 @@ export function ValidationPanel({
         </button>
         <span className="muted small">Canonical reference aligner, in-browser WASM</span>
       </div>
+
+      {refinedTm != null && (
+        <p className="muted small">
+          Native iterative-refined TM-score: <strong>{refinedTm.toFixed(4)}</strong> (no WASM; re-superposes on the core).
+        </p>
+      )}
 
       {phase === "error" && <p className="status error">TM-align unavailable: {error}</p>}
 

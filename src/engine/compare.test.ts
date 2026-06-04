@@ -8,6 +8,7 @@ import {
   gdtTs,
   spearman,
   computeComparison,
+  refineTmScore,
   type ComparisonMetrics,
 } from "./compare.ts";
 import type { Alignment, Mat3 } from "./types.ts";
@@ -209,6 +210,38 @@ describe("spearman", () => {
   it("handles ties with average ranks", () => {
     // Matches scipy.stats.spearmanr([1,2,2,3],[1,2,3,4]) = 0.9486832980505138
     expect(spearman([1, 2, 2, 3], [1, 2, 3, 4])).toBeCloseTo(0.9486832980505138, 10);
+  });
+});
+
+describe("refineTmScore", () => {
+  function interleave(triples: number[][]): Float64Array {
+    const a = new Float64Array(triples.length * 3);
+    triples.forEach(([x, y, z], i) => { a[i * 3] = x; a[i * 3 + 1] = y; a[i * 3 + 2] = z; });
+    return a;
+  }
+
+  it("equals 1 for identical structures", () => {
+    const c = interleave(CLOUD);
+    expect(refineTmScore(c, c, CLOUD.length, CLOUD.length)).toBeCloseTo(1, 6);
+  });
+
+  it("is >= the plain TM-score when there are outliers dragging the global fit", () => {
+    // A well-aligned core of many residues + a few wild outliers. Refinement should
+    // fit the core and score at least as well as the global superposition.
+    const core: number[][] = [];
+    for (let i = 0; i < 40; i++) core.push([i * 1.5, Math.sin(i) * 2, Math.cos(i) * 2]);
+    const p = core.map((x) => [...x]);
+    const q = core.map((x) => [...x]);
+    // 5 outliers: identical index but displaced far in q
+    for (let i = 35; i < 40; i++) q[i] = [q[i][0], q[i][1] + 40, q[i][2]];
+    const P = interleave(p);
+    const Q = interleave(q);
+    const n = p.length;
+    const sup = kabsch(P, Q, n);
+    const plain = tmScore(perResidueDeviations(applyTransform(P, sup, n), Q, n), n);
+    const refined = refineTmScore(P, Q, n, n);
+    expect(refined).toBeGreaterThanOrEqual(plain - 1e-9);
+    expect(refined).toBeGreaterThan(0.5);
   });
 });
 
