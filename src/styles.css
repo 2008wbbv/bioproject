@@ -1358,3 +1358,8 @@ th svg { margin-left: 0.2rem; opacity: 0.7; }
 .learn-faq summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; }
 .learn-faq p { margin: 0.5rem 0 0; font-size: 0.88rem; }
 @media (max-width: 760px) { .learn-glossary { grid-template-columns: 1fr; } }
+
+/* ===== predictor face-off ===== */
+.faceoff-panel { margin-top: 1.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+.faceoff-panel .search-head button { padding: 0.45rem 0.9rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+.faceoff-win { font-weight: 700; color: #15803d; }
