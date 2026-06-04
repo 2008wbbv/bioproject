@@ -13,6 +13,8 @@ export function Sidebar({
   entries,
   recentEntries,
   collapsed,
+  width,
+  onResizeStart,
   onNavigate,
   onNewComparison,
   onOpenEntry,
@@ -25,6 +27,8 @@ export function Sidebar({
   /** Recently *viewed* entries (most-recent first); falls back to updatedAt. */
   recentEntries: WorkspaceEntry[];
   collapsed: boolean;
+  width: number;
+  onResizeStart: (e: React.MouseEvent) => void;
   onNavigate: (v: View) => void;
   onNewComparison: () => void;
   onOpenEntry: (e: WorkspaceEntry) => void;
@@ -40,7 +44,8 @@ export function Sidebar({
   if (collapsed) return null;
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" style={{ width }}>
+      <div className="sidebar-resize" onMouseDown={onResizeStart} title="Drag to resize" />
       <div className="sidebar-brand"><Icon name="flask" size={18} /> OpenFoldUI</div>
 
       <button className="sidebar-new" onClick={onNewComparison}><Icon name="plus" size={15} /> New comparison</button>

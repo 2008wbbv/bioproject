@@ -33,6 +33,7 @@ import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv, exportEntryLog, exportEverything } from "./workspace/export.ts";
 import { downloadReport } from "./workspace/report.ts";
+import { exportPaperBundle } from "./workspace/paper.ts";
 import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
@@ -111,6 +112,23 @@ export function App() {
   const [pair, setPair] = useState<[WorkspaceEntry, WorkspaceEntry] | null>(null);
   const [pendingModel, setPendingModel] = useState<UploadedFile | null>(null);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("openfoldui-sidebar") === "collapsed");
+  const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("openfoldui-sidebar-w")) || 256);
+
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault();
+    const onMove = (ev: MouseEvent) => setSidebarWidth(Math.min(440, Math.max(200, ev.clientX)));
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+  useEffect(() => {
+    localStorage.setItem("openfoldui-sidebar-w", String(sidebarWidth));
+  }, [sidebarWidth]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded());
@@ -302,6 +320,8 @@ export function App() {
         entries={ws.entries}
         recentEntries={recentEntries}
         collapsed={collapsed}
+        width={sidebarWidth}
+        onResizeStart={startResize}
         onNavigate={setView}
         onNewComparison={startNewComparison}
         onOpenEntry={openEntry}
@@ -556,6 +576,9 @@ function Results({
             </button>
             <button onClick={() => { downloadReport(entry); toast("Report downloaded — open and print to PDF.", "success"); }} title="One-click HTML report (print to PDF)">
               <Icon name="book" size={14} /> Report
+            </button>
+            <button onClick={() => { exportPaperBundle(entry); toast("Paper bundle exported (Markdown + SVG figures + BibTeX).", "success"); }} title="Publication-ready bundle: methods, figures, data, citations">
+              <Icon name="book" size={14} /> Paper
             </button>
             {structures && structures.modelFormat === "pdb" && (
               <button onClick={downloadSuperposed} title="Download the model superposed onto the reference">
