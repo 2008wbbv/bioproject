@@ -11,7 +11,7 @@ experimental structure (RMSD, TM-score, GDT-TS, lDDT). **See where it was _confi
 
 [![CI](https://github.com/2008wbbv/bioproject/actions/workflows/ci.yml/badge.svg)](https://github.com/2008wbbv/bioproject/actions/workflows/ci.yml)
 [![live demo](https://img.shields.io/badge/demo-live-22c55e)](https://2008wbbv.github.io/bioproject/)
-[![tests](https://img.shields.io/badge/tests-203%20passing-22c55e)](#testing)
+[![tests](https://img.shields.io/badge/tests-206%20passing-22c55e)](#testing)
 [![architecture](https://img.shields.io/badge/architecture-client--only-2563eb)](#architecture)
 [![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-7c3aed)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)]()
@@ -62,7 +62,10 @@ npx vite-node scripts/validate.ts P24941 6q4g    # any UNIPROT [PDB]
 - **PAE domain decomposition** + per-domain RMSD (catches "domains right, orientation wrong").
 - **Distance-difference matrix** (contact-map comparison) for topological errors.
 - **Secondary-structure** breakdown, **binding-site** impact, **B-factor vs deviation**, **divergent regions**, workspace-wide **confidence calibration**.
-- **UniProt feature track** (domains, sites, modifications, variants); **multi-state** comparison ("which state did AlphaFold predict?").
+- **UniProt feature track** (domains, sites, modifications, variants); **multi-state** comparison with a **conformational-landscape** readout ("which state did AlphaFold predict, and how flexible is the protein?").
+- **Multi-chain / assembly** analysis: per-chain RMSD/TM/lDDT across an oligomer's copies and assembly-**interface** deviation vs the core.
+- **Predictor face-off**: fold the same sequence with ESMFold and benchmark AlphaFold vs ESMFold vs experiment, metric by metric.
+- **Dataset analytics**: score a whole list of accessions at once — aggregate pLDDT distribution, disorder, ranked table, CSV export.
 
 **Bring your own data**
 - Upload `.pdb`/`.cif` models + references; align by author numbering, UniProt, or **sequence** (Needleman–Wunsch).
@@ -71,7 +74,8 @@ npx vite-node scripts/validate.ts P24941 6q4g    # any UNIPROT [PDB]
 
 **A real workspace**
 - IndexedDB history with **favorites, tags, projects, notes, annotations**; a dashboard with stats, sparklines, and a tag/project filter.
-- Command palette (⌘K), keyboard shortcuts, onboarding tour, undo, jump-back, dark mode, installable **PWA**.
+- Command palette (⌘K), keyboard shortcuts, onboarding + **interactive guided tour** (learn the metrics on a live p53 comparison), undo, jump-back, dark mode, installable **PWA**.
+- **Example gallery**: curated, one-click, **shareable** comparisons (every result reproduces from its URL — no account).
 - Export everything: Excel/CSV, **per-comparison reports (HTML→PDF)**, a **paper bundle** (Markdown + SVG figures + BibTeX), replication **logs**, JSON backup, and a full **.zip**.
 
 ## Architecture
@@ -99,7 +103,7 @@ no accounts.**
 ## Testing
 
 ```bash
-npm test          # 198 unit tests (engine, api, workspace, batch, fold, search)
+npm test          # 206 unit tests (engine, api, workspace, batch, fold, search)
 npm run typecheck # tsc --noEmit
 npm run build     # production build (Mol* + tmalign are lazy chunks)
 ```
