@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenFoldUI — The AlphaFold companion</title>
+  <meta name="description" content="Inspect, validate, and compare AlphaFold predictions against experimental structures — RMSD, TM-score, GDT-TS, lDDT, and pLDDT calibration — entirely in your browser. No backend, no accounts." />
+  <meta name="theme-color" content="#0b1220" />
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="OpenFoldUI — The AlphaFold companion" />
+  <meta property="og:description" content="See where AlphaFold was confidently wrong. A client-only tool that inspects, validates, and compares predicted structures against experiment." />
+  <meta property="og:image" content="assets/banner.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><path d='M40 22h20M44 22v22L30 70a5 5 0 0 0 4 8h32a5 5 0 0 0 4-8L56 44V22' fill='none' stroke='%23fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ====================== NAV ====================== -->
+<header class="nav">
+  <a class="nav-brand" href="#top">
+    <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#2563eb"/><path d="M40 22h20M44 22v22L30 70a5 5 0 0 0 4 8h32a5 5 0 0 0 4-8L56 44V22" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>OpenFoldUI</span>
+  </a>
+  <nav class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#science">The science</a>
+    <a href="#how">How it works</a>
+    <a href="#metrics">Metrics</a>
+    <a class="nav-cta" href="https://2008wbbv.github.io/bioproject/" target="_blank" rel="noopener">Launch app →</a>
+  </nav>
+</header>
+
+<!-- ====================== HERO ====================== -->
+<main id="top">
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <span class="eyebrow">THE ALPHAFOLD COMPANION</span>
+    <h1>See where AlphaFold was<br/><span class="grad">confidently wrong.</span></h1>
+    <p class="lede">
+      OpenFoldUI inspects any AlphaFold prediction, validates it against the real experimental
+      structure, and quantifies the agreement — <strong>RMSD, TM-score, GDT-TS, lDDT</strong>, and the
+      correlation between the model's confidence and its actual error. Entirely in your browser.
+      No backend. No accounts. No uploads.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://2008wbbv.github.io/bioproject/" target="_blank" rel="noopener">Launch the app</a>
+      <a class="btn btn-ghost" href="https://github.com/2008wbbv/bioproject" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+    <div class="hero-pills">
+      <span class="pill">RMSD</span>
+      <span class="pill">TM-score</span>
+      <span class="pill">GDT-TS</span>
+      <span class="pill">lDDT</span>
+      <span class="pill pill-accent">pLDDT &#8596; error</span>
+    </div>
+  </div>
+
+  <!-- structure overlay motif -->
+  <div class="hero-art" aria-hidden="true">
+    <svg viewBox="0 0 460 300" width="100%" height="100%">
+      <defs>
+        <linearGradient id="pred" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2563eb"/><stop offset="0.7" stop-color="#38bdf8"/><stop offset="1" stop-color="#ef4444"/>
+        </linearGradient>
+      </defs>
+      <path class="ribbon-exp" d="M20 170 C 110 70, 170 70, 230 150 S 360 250, 430 150" fill="none" stroke="#64748b" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
+      <path class="ribbon-pred" d="M20 180 C 110 80, 170 80, 230 160 S 380 70, 448 120" fill="none" stroke="url(#pred)" stroke-width="9" stroke-linecap="round"/>
+      <circle class="pulse" cx="408" cy="92" r="11" fill="#ef4444"/>
+      <circle cx="408" cy="92" r="22" fill="none" stroke="#ef4444" stroke-width="3" opacity="0.4"/>
+      <text x="392" y="60" fill="#fca5a5" font-size="15" font-weight="600" text-anchor="end" font-family="system-ui">high pLDDT, far off</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ====================== TRUST STRIP ====================== -->
+<section class="strip">
+  <div class="strip-item"><strong>200M+</strong><span>proteins, any AlphaFold model</span></div>
+  <div class="strip-item"><strong>206</strong><span>unit tests, from-scratch engine</span></div>
+  <div class="strip-item"><strong>0</strong><span>backends, accounts, or uploads</span></div>
+  <div class="strip-item"><strong>~0.001</strong><span>TM-score agreement vs TM-align</span></div>
+</section>
+
+<!-- ====================== THE SCIENCE ====================== -->
+<section id="science" class="section science">
+  <div class="section-head">
+    <span class="kicker">The payload</span>
+    <h2>The question it actually answers</h2>
+  </div>
+  <div class="science-card">
+    <p>
+      AlphaFold reports a per-residue confidence (<strong>pLDDT</strong>). The genuinely useful thing
+      to know is where the model was <em>confident but wrong</em> — high pLDDT, yet far from the real
+      structure. OpenFoldUI correlates confidence against measured error
+      (<strong>Spearman&nbsp;ρ</strong>), surfaces the exact residues that break the trend, and paints
+      them onto a 3D structure: <span class="good">blue&nbsp;= good</span>,
+      <span class="bad">red&nbsp;= confidently&nbsp;wrong</span>.
+    </p>
+    <p class="muted">
+      That single check — is the confidence honest? — is what turns a prediction into something you
+      can responsibly build on.
+    </p>
+  </div>
+</section>
+
+<!-- ====================== FEATURES ====================== -->
+<section id="features" class="section">
+  <div class="section-head">
+    <span class="kicker">What it does</span>
+    <h2>A whole companion workflow</h2>
+    <p class="section-sub">From a single prediction to a labelled dataset — every step runs locally.</p>
+  </div>
+
+  <div class="feature-grid">
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+      <h3>Inspect</h3>
+      <p>Any AlphaFold model on its own — pLDDT confidence, predicted disordered regions, PAE, and domains — for any of 200M+ proteins, no experimental structure required.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M6 7l-3 6h6zM18 7l-3 6h6z"/></svg></div>
+      <h3>Compare</h3>
+      <p>Kabsch superposition against the best experimental structure: RMSD, TM-score, GDT-TS, lDDT, per-residue deviation, and the pLDDT-vs-error calibration plot.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 8.5A2 2 0 0 0 6.7 21h10.6a2 2 0 0 0 1.7-3.5L14 9V3"/></svg></div>
+      <h3>Fold</h3>
+      <p>Fold a raw sequence with ESMFold (or your own AlphaFold/ColabFold endpoint) through a persistent queue, then feed it straight into a comparison.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 0 0-4-4H4M15 12a4 4 0 0 1 4 4h1M8.5 8.5l7 7"/><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/></svg></div>
+      <h3>Multi-chain &amp; assemblies</h3>
+      <p>Compare a monomer model against every experimental chain of an oligomer, and measure deviation at the assembly interface versus the core.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M3 12h6M15 12h6M9 8l6 8M15 8l-6 8"/></svg></div>
+      <h3>Predictor face-off</h3>
+      <p>Fold the same sequence with ESMFold and benchmark AlphaFold vs ESMFold vs experiment, metric by metric, with a per-metric winner.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+      <h3>Dataset analytics</h3>
+      <p>Score a whole list of accessions at once: aggregate pLDDT distribution, disorder fractions, a ranked table, and CSV export.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M3 18l5-7 4 4 5-8 4 6M3 21h18"/></svg></div>
+      <h3>Conformational landscapes</h3>
+      <p>Compare against multiple experimental states — apo/holo, open/closed — and see which conformation the model predicted and how flexible the protein is.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></div>
+      <h3>Guided tour</h3>
+      <p>An interactive education mode that runs a live p53 comparison and teaches every metric on real, freshly-computed numbers.</p>
+    </article>
+    <article class="feature">
+      <div class="feature-ico"><svg viewBox="0 0 24 24"><path d="M12 3l2.9 6 6.6.6-5 4.3 1.5 6.4L12 16.9 6 20.8l1.5-6.4-5-4.3 6.6-.6z"/></svg></div>
+      <h3>A real workspace</h3>
+      <p>IndexedDB history with favorites, tags, projects, notes; a dashboard; Excel/CSV/JSON export, paper bundles, and shareable permalinks.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ====================== HOW IT WORKS ====================== -->
+<section id="how" class="section how">
+  <div class="section-head">
+    <span class="kicker">Under the hood</span>
+    <h2>How a comparison is built</h2>
+    <p class="section-sub">A pure, headless TypeScript engine — no DOM, no network, fully unit-tested — at the core.</p>
+  </div>
+  <ol class="steps">
+    <li><span class="step-n">1</span><div><h4>Parse</h4><p>Read the AlphaFold <code>.pdb</code> and the experimental structure (PDBe updated mmCIF, with per-atom UniProt numbers).</p></div></li>
+    <li><span class="step-n">2</span><div><h4>Number</h4><p>Align both to a common UniProt numbering via SIFTS — the right way, so residues match exactly.</p></div></li>
+    <li><span class="step-n">3</span><div><h4>Align</h4><p>Inner-join the prediction and experiment on UniProt number into matched Cα coordinate arrays.</p></div></li>
+    <li><span class="step-n">4</span><div><h4>Compare</h4><p>Kabsch superposition (SVD), then RMSD, TM-score, GDT-TS, lDDT, per-residue deviation, and Spearman(pLDDT, error).</p></div></li>
+  </ol>
+  <p class="how-note muted">Validated against canonical <strong>TM-align</strong> (WASM) to ~0.001 TM-score, and on real data (p53/2OCJ → RMSD 0.51&nbsp;Å, TM 0.99, GDT 0.99).</p>
+</section>
+
+<!-- ====================== METRICS ====================== -->
+<section id="metrics" class="section">
+  <div class="section-head">
+    <span class="kicker">Reference</span>
+    <h2>Every metric, computed from scratch</h2>
+  </div>
+  <div class="metrics-table">
+    <div class="mt-row mt-head"><span>Metric</span><span>Range</span><span>What it measures</span></div>
+    <div class="mt-row"><span class="mt-name">RMSD</span><span>0 → ∞ Å</span><span>Average Cα distance after best-fit superposition. Lower is better.</span></div>
+    <div class="mt-row"><span class="mt-name">TM-score</span><span>0 → 1</span><span>Length-normalised fold similarity. ≥ 0.5 means the same fold.</span></div>
+    <div class="mt-row"><span class="mt-name">GDT-TS</span><span>0 → 1</span><span>Mean fraction of residues within 1, 2, 4, 8 Å cutoffs.</span></div>
+    <div class="mt-row"><span class="mt-name">lDDT</span><span>0 → 1</span><span>Local distance differences — superposition-free. Exactly what pLDDT predicts.</span></div>
+    <div class="mt-row"><span class="mt-name">pLDDT–error&nbsp;ρ</span><span>−1 → 1</span><span>Spearman of confidence vs deviation. Negative = well-calibrated.</span></div>
+  </div>
+</section>
+
+<!-- ====================== PRIVACY / CLIENT-ONLY ====================== -->
+<section class="section privacy">
+  <div class="privacy-inner">
+    <h2>It all runs on your machine</h2>
+    <p>
+      Every metric is computed in your browser by a native TypeScript engine. Structures are fetched
+      directly from public databases (AlphaFold DB, PDBe, UniProt); your own uploads never leave the
+      page. The whole thing is an installable, offline-capable <strong>PWA</strong> — no server, no
+      tracking, no sign-in.
+    </p>
+    <div class="badge-row">
+      <span class="badge">Client-only</span>
+      <span class="badge">PWA · offline</span>
+      <span class="badge">TypeScript strict</span>
+      <span class="badge">MIT licensed</span>
+      <span class="badge">No tracking</span>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== FINAL CTA ====================== -->
+<section class="section cta">
+  <h2>Point it at your protein.</h2>
+  <p class="muted">Type a name or UniProt accession, upload your own model, or fold a sequence.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="https://2008wbbv.github.io/bioproject/" target="_blank" rel="noopener">Launch the app</a>
+    <a class="btn btn-ghost" href="https://github.com/2008wbbv/bioproject" target="_blank" rel="noopener">Read the source</a>
+  </div>
+</section>
+</main>
+
+<!-- ====================== FOOTER ====================== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#2563eb"/><path d="M40 22h20M44 22v22L30 70a5 5 0 0 0 4 8h32a5 5 0 0 0 4-8L56 44V22" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>OpenFoldUI</span>
+    </div>
+    <p class="muted">The AlphaFold companion · client-only · MIT. Not affiliated with DeepMind or EMBL-EBI.</p>
+    <div class="footer-links">
+      <a href="https://2008wbbv.github.io/bioproject/" target="_blank" rel="noopener">Live app</a>
+      <a href="https://github.com/2008wbbv/bioproject" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://alphafold.ebi.ac.uk/" target="_blank" rel="noopener">AlphaFold DB</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
