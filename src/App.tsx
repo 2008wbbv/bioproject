@@ -31,6 +31,7 @@ import { BatchView } from "./batch/BatchView.tsx";
 import { FoldView } from "./fold/FoldView.tsx";
 import { LearnView } from "./ui/LearnView.tsx";
 import { InspectView } from "./components/InspectView.tsx";
+import { DatasetView } from "./components/DatasetView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv, exportEntryLog, exportEverything } from "./workspace/export.ts";
@@ -67,6 +68,7 @@ const BREADCRUMBS: Record<string, string> = {
   fold: "Fold sequences",
   learn: "Learn",
   inspect: "Inspect model",
+  dataset: "Dataset analytics",
 };
 
 /** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
@@ -90,7 +92,7 @@ const MolstarViewer = lazy(() =>
 );
 
 type Status = "idle" | "loading" | "error" | "done";
-type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn" | "inspect";
+type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn" | "inspect" | "dataset";
 
 interface Active {
   id: string;
@@ -307,6 +309,7 @@ export function App() {
       { id: "new", label: "New comparison", hint: "from database", run: startNewComparison },
       { id: "upload", label: "Upload your own files", hint: "compare local structures", run: () => { setCompareMode("upload"); setView("compare"); } },
       { id: "inspect", label: "Inspect an AlphaFold model", hint: "any protein, no experimental needed", run: () => setView("inspect") },
+      { id: "dataset", label: "Dataset analytics", hint: "many models at once", run: () => setView("dataset") },
       { id: "fold", label: "Fold a sequence", hint: "ESMFold", run: () => setView("fold") },
       { id: "dashboard", label: "Go to Dashboard", run: () => setView("dashboard") },
       { id: "batch", label: "Go to Batch", run: () => setView("batch") },
@@ -457,6 +460,10 @@ export function App() {
           initialQuery={inspectQuery}
           onCompare={(acc) => { setQuery(acc); setCompareMode("database"); void run(acc); }}
         />
+      )}
+
+      {view === "dataset" && (
+        <DatasetView onOpen={(acc) => { setInspectQuery(acc); setView("inspect"); }} />
       )}
 
           <footer className="app-footer">
