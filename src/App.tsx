@@ -29,6 +29,7 @@ import { LearnView } from "./ui/LearnView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv, exportEntryLog, exportEverything } from "./workspace/export.ts";
+import { downloadReport } from "./workspace/report.ts";
 import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
@@ -521,6 +522,9 @@ function Results({
             <button onClick={() => exportEntryCsv(entry)}>CSV</button>
             <button onClick={() => exportEntryLog(entry)} title="Provenance + methods to replicate this">
               Log
+            </button>
+            <button onClick={() => { downloadReport(entry); toast("Report downloaded — open and print to PDF.", "success"); }} title="One-click HTML report (print to PDF)">
+              <Icon name="book" size={14} /> Report
             </button>
             {structures && structures.modelFormat === "pdb" && (
               <button onClick={downloadSuperposed} title="Download the model superposed onto the reference">
