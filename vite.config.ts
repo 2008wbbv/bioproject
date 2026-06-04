@@ -5,6 +5,8 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig({
+  // On GitHub Pages the app is served from /<repo>/; locally and elsewhere from /.
+  base: process.env.GITHUB_PAGES ? "/bioproject/" : "/",
   plugins: [
     react(),
     VitePWA({

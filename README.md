@@ -9,11 +9,12 @@
 **Inspect** any AlphaFold model (confidence, disorder, PAE, domains). **Validate** it against the real
 experimental structure (RMSD, TM-score, GDT-TS, lDDT). **See where it was _confidently wrong_.**
 
-[![tests](https://img.shields.io/badge/tests-198%20passing-22c55e)](#testing)
+[![CI](https://github.com/2008wbbv/bioproject/actions/workflows/ci.yml/badge.svg)](https://github.com/2008wbbv/bioproject/actions/workflows/ci.yml)
+[![live demo](https://img.shields.io/badge/demo-live-22c55e)](https://2008wbbv.github.io/bioproject/)
+[![tests](https://img.shields.io/badge/tests-203%20passing-22c55e)](#testing)
 [![architecture](https://img.shields.io/badge/architecture-client--only-2563eb)](#architecture)
 [![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-7c3aed)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)]()
-[![backend](https://img.shields.io/badge/backend-none-64748b)]()
 [![license](https://img.shields.io/badge/license-MIT-0ea5e9)](LICENSE)
 
 </div>
