@@ -6,6 +6,7 @@
 import { useMemo, useState } from "react";
 import type { PerResidue } from "../engine/types.ts";
 import { useSettings } from "../settings.tsx";
+import { SortCaret } from "../ui/SortCaret.tsx";
 
 type SortKey = "uniprotNum" | "plddt" | "deviation";
 
@@ -29,7 +30,7 @@ export function DataSheet({ perResidue }: { perResidue: PerResidue[] }) {
     }
   }
 
-  const arrow = (key: SortKey) => (key === sortKey ? (asc ? " ▲" : " ▼") : "");
+  const arrow = (key: SortKey) => <SortCaret active={key === sortKey} asc={asc} />;
 
   return (
     <div className="datasheet">

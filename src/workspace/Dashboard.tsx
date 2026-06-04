@@ -20,6 +20,7 @@ import { parseWorkspace } from "./backup.ts";
 import { Distributions } from "../charts/Distributions.tsx";
 import { CalibrationCard } from "../components/CalibrationCard.tsx";
 import { Icon } from "../ui/Icon.tsx";
+import { SortCaret } from "../ui/SortCaret.tsx";
 import { Sparkline } from "../ui/Sparkline.tsx";
 import { HeroArt } from "../ui/HeroArt.tsx";
 
@@ -125,7 +126,7 @@ export function Dashboard({
       setAsc(key === "proteinName");
     }
   }
-  const arrow = (key: SortKey) => (key === sortKey ? (asc ? " ▲" : " ▼") : "");
+  const arrow = (key: SortKey) => <SortCaret active={key === sortKey} asc={asc} />;
 
   async function handleImport(file: File) {
     try {
@@ -230,7 +231,7 @@ export function Dashboard({
       {project && (
         <div className="tag-filter">
           <span className="muted">Project:</span>
-          <button className="chip on" onClick={() => setProject(null)}>{project} ✕</button>
+          <button className="chip on" onClick={() => setProject(null)}>{project} <Icon name="close" size={11} /></button>
         </div>
       )}
 

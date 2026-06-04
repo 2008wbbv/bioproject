@@ -384,6 +384,7 @@ export function App() {
               onTags={(t) => void ws.setTags(liveEntry.id, t)}
               onProject={(p) => void ws.setProject(liveEntry.id, p)}
               projectOptions={[...new Set(ws.entries.map((e) => e.project).filter((p): p is string => !!p))]}
+              tagSuggestions={[...new Set(ws.entries.flatMap((e) => e.tags ?? []))]}
               onCompareAccession={(acc) => { setQuery(acc); void run(acc); }}
             />
           )}
@@ -455,6 +456,7 @@ function Results({
   onTags,
   onProject,
   projectOptions,
+  tagSuggestions,
   onCompareAccession,
 }: {
   entry: WorkspaceEntry;
@@ -466,6 +468,7 @@ function Results({
   onTags: (tags: string[]) => void;
   onProject: (project: string) => void;
   projectOptions: string[];
+  tagSuggestions: string[];
   onCompareAccession: (accession: string) => void;
 }) {
   const { toast } = useToast();
@@ -615,7 +618,7 @@ function Results({
         />
         <datalist id="ofu-projects">{projectOptions.map((p) => <option key={p} value={p} />)}</datalist>
       </div>
-      <TagEditor tags={entry.tags ?? []} onChange={onTags} />
+      <TagEditor tags={entry.tags ?? []} onChange={onTags} suggestions={tagSuggestions} />
       <NotesEditor value={entry.notes} onSave={onNotes} />
 
       <div className="sheet-toggle">

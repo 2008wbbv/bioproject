@@ -28,7 +28,10 @@ export type IconName =
   | "check"
   | "beaker"
   | "share"
-  | "alert";
+  | "alert"
+  | "chevron"
+  | "retry"
+  | "x-circle";
 
 const PATHS: Record<IconName, string> = {
   flask: "M9 3h6 M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3",
@@ -58,6 +61,9 @@ const PATHS: Record<IconName, string> = {
   beaker: "M4.5 3h15 M6 3v7l-3 8a2 2 0 0 0 1.9 2.7h12.2A2 2 0 0 0 21 18l-3-8V3 M6 14h12",
   share: "M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8 M16 6l-4-4-4 4 M12 2v13",
   alert: "M10.3 3.8 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0z M12 9v4 M12 17h.01",
+  chevron: "M6 9l6 6 6-6",
+  retry: "M3 12a9 9 0 1 0 3-6.7L3 8 M3 4v4h4",
+  "x-circle": "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M15 9l-6 6 M9 9l6 6",
 };
 
 const FILLED: ReadonlySet<IconName> = new Set(["star"]);

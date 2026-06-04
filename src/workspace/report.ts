@@ -57,7 +57,7 @@ export function buildReportHtml(entry: WorkspaceEntry): string {
   <h1>${esc(entry.proteinName)}</h1>
   <div class="muted">${esc(entry.uniprot)} vs ${esc(entry.pdbId)} · chain ${esc(entry.chain)} · ${new Date(entry.createdAt).toDateString()}</div>
   <table class="metrics"><tbody>${metrics.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</tbody></table>
-  ${entry.warnings.length ? `<p class="warn">⚠ ${entry.warnings.map(esc).join("<br>⚠ ")}</p>` : ""}
+  ${entry.warnings.length ? `<p class="warn"><strong>Warnings:</strong><br>${entry.warnings.map(esc).join("<br>")}</p>` : ""}
   <h2>Figures</h2>
   <div class="figs"><div>${scatter}</div><div>${track}</div></div>
   <h2>Methods</h2>

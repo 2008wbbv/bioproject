@@ -4,7 +4,15 @@
  */
 import { useState } from "react";
 
-export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+export function TagEditor({
+  tags,
+  onChange,
+  suggestions = [],
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  suggestions?: string[];
+}) {
   const [draft, setDraft] = useState("");
 
   function add() {
@@ -26,6 +34,7 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags:
       ))}
       <input
         className="tag-input"
+        list="ofu-tag-suggestions"
         value={draft}
         placeholder="add tag…"
         onChange={(e) => setDraft(e.target.value)}
@@ -37,6 +46,11 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags:
         }}
         onBlur={add}
       />
+      <datalist id="ofu-tag-suggestions">
+        {suggestions.filter((s) => !tags.includes(s)).map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
     </div>
   );
 }
