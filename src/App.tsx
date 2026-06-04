@@ -19,6 +19,7 @@ import { UploadPanel } from "./components/UploadPanel.tsx";
 import { SearchPanel } from "./search/SearchPanel.tsx";
 import { PaePanel } from "./components/PaePanel.tsx";
 import { DomainPanel } from "./components/DomainPanel.tsx";
+import { FeatureTrack } from "./components/FeatureTrack.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { FoldView } from "./fold/FoldView.tsx";
@@ -552,6 +553,14 @@ function Results({
         <ScatterPlddtDeviation perResidue={entry.perResidue} spearman={entry.plddtErrorSpearman} />
         <DeviationTrack perResidue={entry.perResidue} />
       </div>
+
+      {entry.uniprot && /^[A-Z0-9]{6,10}$/.test(entry.uniprot) && entry.perResidue.length > 0 && (
+        <FeatureTrack
+          uniprot={entry.uniprot}
+          minRes={Math.min(...entry.perResidue.map((r) => r.uniprotNum))}
+          maxRes={Math.max(...entry.perResidue.map((r) => r.uniprotNum))}
+        />
+      )}
 
       <ConfidenceSummary perResidue={entry.perResidue} />
 
