@@ -29,6 +29,7 @@ import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { FoldView } from "./fold/FoldView.tsx";
 import { LearnView } from "./ui/LearnView.tsx";
+import { InspectView } from "./components/InspectView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv, exportEntryLog, exportEverything } from "./workspace/export.ts";
@@ -63,6 +64,7 @@ const BREADCRUMBS: Record<string, string> = {
   compare2: "Compare two",
   fold: "Fold sequences",
   learn: "Learn",
+  inspect: "Inspect model",
 };
 
 /** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
@@ -86,7 +88,7 @@ const MolstarViewer = lazy(() =>
 );
 
 type Status = "idle" | "loading" | "error" | "done";
-type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn";
+type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn" | "inspect";
 
 interface Active {
   id: string;
@@ -301,6 +303,7 @@ export function App() {
     () => [
       { id: "new", label: "New comparison", hint: "from database", run: startNewComparison },
       { id: "upload", label: "Upload your own files", hint: "compare local structures", run: () => { setCompareMode("upload"); setView("compare"); } },
+      { id: "inspect", label: "Inspect an AlphaFold model", hint: "any protein, no experimental needed", run: () => setView("inspect") },
       { id: "fold", label: "Fold a sequence", hint: "ESMFold", run: () => setView("fold") },
       { id: "dashboard", label: "Go to Dashboard", run: () => setView("dashboard") },
       { id: "batch", label: "Go to Batch", run: () => setView("batch") },
@@ -444,6 +447,10 @@ export function App() {
       )}
 
       {view === "learn" && <LearnView />}
+
+      {view === "inspect" && (
+        <InspectView onCompare={(acc) => { setQuery(acc); setCompareMode("database"); void run(acc); }} />
+      )}
 
           <footer className="app-footer">
             <span className="muted">
