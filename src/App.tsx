@@ -15,6 +15,7 @@ import { prepareViewerModels } from "./viewer/prepareModels.ts";
 import { DataSheet } from "./components/DataSheet.tsx";
 import { NotesEditor } from "./components/NotesEditor.tsx";
 import { ConfidenceSummary } from "./components/ConfidenceSummary.tsx";
+import { StructuralBreakdown } from "./components/StructuralBreakdown.tsx";
 import { UploadPanel } from "./components/UploadPanel.tsx";
 import { SearchPanel } from "./search/SearchPanel.tsx";
 import { PaePanel } from "./components/PaePanel.tsx";
@@ -564,6 +565,15 @@ function Results({
       )}
 
       <ConfidenceSummary perResidue={entry.perResidue} />
+
+      {structures?.modelCaPdb && structures.refText && (
+        <StructuralBreakdown
+          perResidue={entry.perResidue}
+          modelCaPdb={structures.modelCaPdb}
+          refText={structures.refText}
+          refFormat={structures.refFormat}
+        />
+      )}
 
       <TagEditor tags={entry.tags ?? []} onChange={onTags} />
       <NotesEditor value={entry.notes} onSave={onNotes} />

@@ -1238,3 +1238,11 @@ svg { vertical-align: -0.15em; flex-shrink: 0; }
 :root[data-theme="dark"] .apo-tag { background: #052e16; color: #86efac; }
 .rmsd-bar { display: inline-block; width: 60px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 0.4rem; }
 .rmsd-fill { height: 100%; background: var(--accent); }
+
+/* ===== SS / binding breakdown ===== */
+.ss-rows { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
+.ss-row { display: grid; grid-template-columns: 90px 80px 1fr 64px; align-items: center; gap: 0.6rem; }
+.ss-chip { color: white; font-size: 0.76rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 6px; text-align: center; }
+.ss-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.ss-fill { height: 100%; transition: width 0.4s ease; }
+.calibration-card { margin-bottom: 1.5rem; }

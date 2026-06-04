@@ -32,11 +32,19 @@ export interface HetGroup {
   atomCount: number;
 }
 
+/** A non-water, non-junk ligand atom with its coordinate (for binding-site analysis). */
+export interface HetAtom {
+  resName: string;
+  xyz: [number, number, number];
+}
+
 /** Result of parsing one structure file. */
 export interface ParsedStructure {
   residues: ResidueRecord[];
   /** Heteroatom groups after filtering crystallization junk (SPEC.md §8). */
   ligands: HetGroup[];
+  /** Ligand atom coordinates (non-water, non-junk) for binding-site detection. */
+  hetAtoms: HetAtom[];
   /** Free-text notes raised during parsing (e.g. multi-fragment AF model). */
   warnings: string[];
 }

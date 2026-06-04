@@ -18,7 +18,7 @@
  * `loop_` table that holds coordinates (single-line, whitespace-delimited rows with
  * `.`/`?` null markers and optional quoting), which is all the engine needs.
  */
-import type { HetGroup, ParsedStructure, ResidueRecord } from "./types.ts";
+import type { HetAtom, HetGroup, ParsedStructure, ResidueRecord } from "./types.ts";
 import { WATER_NAMES, isIgnoredHet } from "./ligands.ts";
 
 /** Tokenize one CIF data row, respecting single/double quotes. */
@@ -93,7 +93,7 @@ export function parseCif(text: string, opts: { uniprotAcc?: string } = {}): Pars
     }
   }
   if (!inHeader) {
-    return { residues: [], ligands: [], warnings: ["No atom_site loop found in mmCIF."] };
+    return { residues: [], ligands: [], hetAtoms: [], warnings: ["No atom_site loop found in mmCIF."] };
   }
   for (; row < lines.length; row++) {
     const t = lines[row].trim();
@@ -127,6 +127,7 @@ export function parseCif(text: string, opts: { uniprotAcc?: string } = {}): Pars
 
   const residues = new Map<string, ResidueAccumulator>();
   const hetGroups = new Map<string, HetGroup>();
+  const hetAtoms: HetAtom[] = [];
   const warnings: string[] = [];
   let firstModel: string | null = null;
   let sawOtherModel = false;
@@ -168,6 +169,12 @@ export function parseCif(text: string, opts: { uniprotAcc?: string } = {}): Pars
       const g = hetGroups.get(key);
       if (g) g.atomCount += 1;
       else hetGroups.set(key, { resName, chain, authNum, atomCount: 1 });
+      if (!isIgnoredHet(resName)) {
+        const x = Number.parseFloat(f[C.x]);
+        const y = Number.parseFloat(f[C.y]);
+        const z = Number.parseFloat(f[C.z]);
+        if (!Number.isNaN(x) && !Number.isNaN(y) && !Number.isNaN(z)) hetAtoms.push({ resName, xyz: [x, y, z] });
+      }
       continue;
     }
 
@@ -234,5 +241,5 @@ export function parseCif(text: string, opts: { uniprotAcc?: string } = {}): Pars
     warnings.push(`Experimental structure is ligand-bound (holo): ${names}.`);
   }
 
-  return { residues: records, ligands, warnings };
+  return { residues: records, ligands, hetAtoms, warnings };
 }

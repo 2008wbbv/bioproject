@@ -90,6 +90,52 @@ export function divergentRegions(
   return regions.sort((a, b) => b.meanDeviation - a.meanDeviation);
 }
 
+/** One pLDDT bin of the calibration curve. */
+export interface CalibrationBin {
+  plddtLo: number;
+  plddtHi: number;
+  n: number;
+  meanDeviation: number;
+  /** Fraction of residues in this bin within `withinA` Å (i.e. "correct"). */
+  fractionCorrect: number;
+}
+
+/**
+ * pLDDT calibration: bin residues by confidence and report the mean deviation per
+ * bin. Well-calibrated confidence means deviation falls monotonically as pLDDT
+ * rises. Aggregated across many comparisons it's a reliability diagram for the
+ * predictor on your dataset.
+ */
+export function calibrationCurve(
+  residues: Array<{ plddt: number; deviation: number }>,
+  binSize = 10,
+  withinA = 2,
+): CalibrationBin[] {
+  const nbins = Math.ceil(100 / binSize);
+  const bins: CalibrationBin[] = Array.from({ length: nbins }, (_, i) => ({
+    plddtLo: i * binSize,
+    plddtHi: Math.min(100, (i + 1) * binSize),
+    n: 0,
+    meanDeviation: 0,
+    fractionCorrect: 0,
+  }));
+  const sums = new Array(nbins).fill(0);
+  const correct = new Array(nbins).fill(0);
+  for (const r of residues) {
+    const b = Math.min(nbins - 1, Math.max(0, Math.floor(r.plddt / binSize)));
+    bins[b].n++;
+    sums[b] += r.deviation;
+    if (r.deviation <= withinA) correct[b]++;
+  }
+  for (let i = 0; i < nbins; i++) {
+    if (bins[i].n > 0) {
+      bins[i].meanDeviation = sums[i] / bins[i].n;
+      bins[i].fractionCorrect = correct[i] / bins[i].n;
+    }
+  }
+  return bins.filter((b) => b.n > 0);
+}
+
 export interface DeviationStats {
   mean: number;
   median: number;

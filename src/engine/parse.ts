@@ -12,7 +12,7 @@
  * PDB ATOM/HETATM are fixed-column records (PDB v3.3). We read by byte offset, not
  * by splitting on whitespace, because coordinates and names can run together.
  */
-import type { HetGroup, ParsedStructure, ResidueRecord } from "./types.ts";
+import type { HetAtom, HetGroup, ParsedStructure, ResidueRecord } from "./types.ts";
 import { WATER_NAMES, isIgnoredHet } from "./ligands.ts";
 
 // 0-indexed [start, end) column slices for an ATOM/HETATM record (PDB v3.3).
@@ -68,6 +68,7 @@ export function parsePdb(text: string): ParsedStructure {
   const residues = new Map<string, ResidueAccumulator>();
   // HETATM groups keyed by chain|resName|authNum|iCode -> atom count.
   const hetGroups = new Map<string, HetGroup>();
+  const hetAtoms: HetAtom[] = [];
   const warnings: string[] = [];
 
   // A single model is commonly wrapped in MODEL 1 ... ENDMDL (AlphaFold does this),
@@ -118,6 +119,13 @@ export function parsePdb(text: string): ParsedStructure {
         existing.atomCount += 1;
       } else {
         hetGroups.set(key, { resName, chain, authNum, atomCount: 1 });
+      }
+      // Keep real ligand atom coordinates (for binding-site detection).
+      if (!isIgnoredHet(resName)) {
+        const x = num(line, COL.x);
+        const y = num(line, COL.y);
+        const z = num(line, COL.z);
+        if (!Number.isNaN(x) && !Number.isNaN(y) && !Number.isNaN(z)) hetAtoms.push({ resName, xyz: [x, y, z] });
       }
       continue;
     }
@@ -176,5 +184,5 @@ export function parsePdb(text: string): ParsedStructure {
     warnings.push(`Experimental structure is ligand-bound (holo): ${names}.`);
   }
 
-  return { residues: records, ligands, warnings };
+  return { residues: records, ligands, hetAtoms, warnings };
 }

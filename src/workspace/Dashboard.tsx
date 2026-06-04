@@ -18,6 +18,7 @@ import {
 } from "./export.ts";
 import { parseWorkspace } from "./backup.ts";
 import { Distributions } from "../charts/Distributions.tsx";
+import { CalibrationCard } from "../components/CalibrationCard.tsx";
 import { Icon } from "../ui/Icon.tsx";
 import { Sparkline } from "../ui/Sparkline.tsx";
 import { HeroArt } from "../ui/HeroArt.tsx";
@@ -184,6 +185,8 @@ export function Dashboard({
       {stats.count >= 3 && (
         <Distributions points={ws.entries.map((e) => ({ tmScore: e.tmScore, rmsd: e.rmsd }))} />
       )}
+
+      <CalibrationCard entries={ws.entries} />
 
       {favorites.length > 0 && (
         <div className="fav-strip">

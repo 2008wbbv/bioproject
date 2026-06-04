@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { plddtBands, confidentlyWrong, deviationStats, divergentRegions } from "./analysis.ts";
+import { plddtBands, confidentlyWrong, deviationStats, divergentRegions, calibrationCurve } from "./analysis.ts";
 import type { PerResidue } from "./types.ts";
 
 const pr = (uniprotNum: number, plddt: number, deviation: number): PerResidue => ({ uniprotNum, plddt, deviation });
@@ -67,5 +67,28 @@ describe("divergentRegions", () => {
 
   it("returns nothing when no region qualifies", () => {
     expect(divergentRegions([pr(1, 90, 0.2), pr(2, 90, 0.3)], { devMin: 3 })).toEqual([]);
+  });
+});
+
+describe("calibrationCurve", () => {
+  it("bins by pLDDT and averages deviation per bin", () => {
+    const data = [
+      { plddt: 95, deviation: 0.5 },
+      { plddt: 92, deviation: 1.5 },
+      { plddt: 45, deviation: 8 },
+      { plddt: 42, deviation: 6 },
+    ];
+    const curve = calibrationCurve(data, 10);
+    const hi = curve.find((b) => b.plddtLo === 90)!;
+    const lo = curve.find((b) => b.plddtLo === 40)!;
+    expect(hi.n).toBe(2);
+    expect(hi.meanDeviation).toBeCloseTo(1.0, 6);
+    expect(hi.fractionCorrect).toBeCloseTo(1, 6); // both within 2 Å
+    expect(lo.meanDeviation).toBeCloseTo(7, 6);
+    expect(lo.fractionCorrect).toBe(0);
+  });
+
+  it("omits empty bins", () => {
+    expect(calibrationCurve([{ plddt: 95, deviation: 1 }], 10)).toHaveLength(1);
   });
 });
