@@ -33,6 +33,7 @@ export function entryFromResult(query: string, data: PipelineResult): WorkspaceE
     rmsd: r.rmsd,
     tmScore: r.tmScore,
     gdtTs: r.gdtTs,
+    lddt: r.lddt,
     plddtErrorSpearman: r.plddtErrorSpearman,
     nMatched: r.nMatched,
     warnings: r.warnings,

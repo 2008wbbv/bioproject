@@ -70,6 +70,8 @@ export interface Alignment {
   uniprotNums: Int32Array;
   /** pLDDT per matched residue, parallel to the coordinate arrays. */
   plddt: Float64Array;
+  /** Reference (experimental) B-factor per matched residue. */
+  refBFactor: Float64Array;
   nMatched: number;
 }
 
@@ -96,6 +98,10 @@ export interface PerResidue {
   /** CA-CA distance after superposition, in angstroms. */
   deviation: number;
   plddt: number;
+  /** Observed local Distance Difference Test in [0,1] (what pLDDT predicts). */
+  lddt?: number;
+  /** Reference (experimental) B-factor for this residue, when available. */
+  expBFactor?: number;
 }
 
 /** Full comparison result for one protein. SPEC.md §5. */
@@ -106,6 +112,8 @@ export interface ComparisonResult {
   rmsd: number;
   tmScore: number;
   gdtTs: number;
+  /** Global lDDT in [0,1] (superposition-free local accuracy). */
+  lddt: number;
   plddtErrorSpearman: number;
   perResidue: PerResidue[];
   warnings: string[];

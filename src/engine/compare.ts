@@ -9,6 +9,7 @@
  */
 import { Matrix, SingularValueDecomposition } from "ml-matrix";
 import type { Alignment, Mat3, PerResidue, Superposition } from "./types.ts";
+import { lddt } from "./lddt.ts";
 
 /** GDT-TS distance thresholds in angstroms. */
 const GDT_THRESHOLDS = [1, 2, 4, 8] as const;
@@ -240,6 +241,8 @@ export interface ComparisonMetrics {
   rmsd: number;
   tmScore: number;
   gdtTs: number;
+  /** Global lDDT in [0,1] (superposition-free). */
+  lddt: number;
   /** Spearman(pLDDT, deviation). The scientific payload. NaN if undefined. */
   plddtErrorSpearman: number;
   perResidue: PerResidue[];
@@ -257,10 +260,12 @@ export function computeComparison(
   alignment: Alignment,
   opts: { referenceLength?: number } = {},
 ): ComparisonMetrics {
-  const { p, q, uniprotNums, plddt, nMatched } = alignment;
+  const { p, q, uniprotNums, plddt, refBFactor, nMatched } = alignment;
   const sup = kabsch(p, q, nMatched);
   const alignedP = applyTransform(p, sup, nMatched);
   const deviations = perResidueDeviations(alignedP, q, nMatched);
+  // lDDT is superposition-free: computed from the raw (un-superposed) coordinates.
+  const local = lddt(p, q, nMatched);
 
   const referenceLength = opts.referenceLength ?? nMatched;
   const perResidue: PerResidue[] = [];
@@ -269,6 +274,8 @@ export function computeComparison(
       uniprotNum: uniprotNums[i],
       deviation: deviations[i],
       plddt: plddt[i],
+      lddt: local.perResidue[i],
+      expBFactor: refBFactor[i],
     });
   }
 
@@ -277,6 +284,7 @@ export function computeComparison(
     rmsd: rmsdFromDeviations(deviations),
     tmScore: tmScore(deviations, referenceLength),
     gdtTs: gdtTs(deviations),
+    lddt: local.global,
     plddtErrorSpearman: spearman(plddt, deviations),
     perResidue,
     superposition: sup,

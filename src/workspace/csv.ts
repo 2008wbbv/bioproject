@@ -23,8 +23,14 @@ export function perResidueCsv(entry: WorkspaceEntry): string {
   const rows = entry.perResidue
     .slice()
     .sort((a, b) => a.uniprotNum - b.uniprotNum)
-    .map((r) => [r.uniprotNum, round(r.plddt, 2), round(r.deviation, 3)]);
-  return toCsv(["uniprot_residue", "plddt", "deviation_angstrom"], rows);
+    .map((r) => [
+      r.uniprotNum,
+      round(r.plddt, 2),
+      round(r.deviation, 3),
+      r.lddt != null ? round(r.lddt, 3) : "",
+      r.expBFactor != null ? round(r.expBFactor, 2) : "",
+    ]);
+  return toCsv(["uniprot_residue", "plddt", "deviation_angstrom", "lddt", "exp_bfactor"], rows);
 }
 
 /** One row per saved comparison — the dashboard, as CSV. */
@@ -37,6 +43,7 @@ export function entriesCsv(entries: WorkspaceEntry[]): string {
     round(e.rmsd, 3),
     round(e.tmScore, 4),
     round(e.gdtTs, 4),
+    e.lddt != null ? round(e.lddt, 4) : "",
     Number.isNaN(e.plddtErrorSpearman) ? "" : round(e.plddtErrorSpearman, 4),
     e.nMatched,
     e.favorite ? "yes" : "",
@@ -45,7 +52,7 @@ export function entriesCsv(entries: WorkspaceEntry[]): string {
     new Date(e.updatedAt).toISOString(),
   ]);
   return toCsv(
-    ["uniprot", "protein", "pdb_id", "chain", "rmsd", "tm_score", "gdt_ts", "plddt_error_spearman", "n_matched", "favorite", "tags", "notes", "updated"],
+    ["uniprot", "protein", "pdb_id", "chain", "rmsd", "tm_score", "gdt_ts", "lddt", "plddt_error_spearman", "n_matched", "favorite", "tags", "notes", "updated"],
     rows,
   );
 }

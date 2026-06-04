@@ -54,6 +54,7 @@ export function parseWorkspace(text: string): WorkspaceEntry[] {
       rmsd: asNum(e.rmsd),
       tmScore: asNum(e.tmScore),
       gdtTs: asNum(e.gdtTs),
+      lddt: typeof e.lddt === "number" ? e.lddt : undefined,
       plddtErrorSpearman: typeof e.plddtErrorSpearman === "number" ? e.plddtErrorSpearman : Number.NaN,
       nMatched: asNum(e.nMatched),
       warnings: Array.isArray(e.warnings) ? e.warnings.filter((w): w is string => typeof w === "string") : [],

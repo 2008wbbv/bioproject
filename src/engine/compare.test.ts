@@ -224,6 +224,7 @@ describe("computeComparison (integration)", () => {
       q: coords(q),
       uniprotNums: Int32Array.from(unp),
       plddt: Float64Array.from(plddt),
+      refBFactor: new Float64Array(p.length),
       nMatched: p.length,
     };
   }

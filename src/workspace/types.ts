@@ -50,6 +50,8 @@ export interface WorkspaceEntry {
   rmsd: number;
   tmScore: number;
   gdtTs: number;
+  /** Global lDDT in [0,1] (superposition-free local accuracy). */
+  lddt?: number;
   plddtErrorSpearman: number;
   nMatched: number;
   warnings: string[];

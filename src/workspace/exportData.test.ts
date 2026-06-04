@@ -41,9 +41,9 @@ describe("perResidueCsv", () => {
   it("sorts by residue and rounds", () => {
     const csv = perResidueCsv(entry());
     const lines = csv.split("\r\n");
-    expect(lines[0]).toBe("uniprot_residue,plddt,deviation_angstrom");
-    expect(lines[1]).toBe("96,90,0.337");
-    expect(lines[2]).toBe("97,88,0.7");
+    expect(lines[0]).toBe("uniprot_residue,plddt,deviation_angstrom,lddt,exp_bfactor");
+    expect(lines[1]).toBe("96,90,0.337,,");
+    expect(lines[2]).toBe("97,88,0.7,,");
   });
 });
 

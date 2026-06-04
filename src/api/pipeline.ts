@@ -128,6 +128,7 @@ function assembleComparison(
     rmsd: metrics.rmsd,
     tmScore: metrics.tmScore,
     gdtTs: metrics.gdtTs,
+    lddt: metrics.lddt,
     plddtErrorSpearman: metrics.plddtErrorSpearman,
     perResidue: metrics.perResidue,
     warnings: [...new Set(warnings)],

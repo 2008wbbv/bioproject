@@ -9,6 +9,8 @@ import type { RankedStructure } from "./api/pdbe.ts";
 import { ApiError } from "./api/errors.ts";
 import { ScatterPlddtDeviation } from "./charts/ScatterPlddtDeviation.tsx";
 import { DeviationTrack } from "./charts/DeviationTrack.tsx";
+import { PlddtLddtScatter } from "./charts/PlddtLddtScatter.tsx";
+import { BFactorScatter } from "./charts/BFactorScatter.tsx";
 import type { ColorMode } from "./viewer/MolstarViewer.tsx";
 import { ViewerErrorBoundary } from "./viewer/ErrorBoundary.tsx";
 import { prepareViewerModels } from "./viewer/prepareModels.ts";
@@ -567,6 +569,7 @@ function Results({
         <Metric label="RMSD" value={`${entry.rmsd.toFixed(2)} Å`} hint="Cα, after superposition" />
         <Metric label="TM-score" value={entry.tmScore.toFixed(3)} hint="1.0 = identical fold" />
         <Metric label="GDT-TS" value={entry.gdtTs.toFixed(3)} hint="fraction within 1–8 Å" />
+        <Metric label="lDDT" value={entry.lddt != null ? entry.lddt.toFixed(3) : "n/a"} hint="superposition-free; what pLDDT predicts" />
         <Metric
           label="pLDDT–error ρ"
           value={Number.isNaN(entry.plddtErrorSpearman) ? "n/a" : entry.plddtErrorSpearman.toFixed(3)}
@@ -586,6 +589,8 @@ function Results({
       <div className="charts">
         <ScatterPlddtDeviation perResidue={entry.perResidue} spearman={entry.plddtErrorSpearman} />
         <DeviationTrack perResidue={entry.perResidue} />
+        <PlddtLddtScatter perResidue={entry.perResidue} />
+        <BFactorScatter perResidue={entry.perResidue} />
       </div>
 
       {entry.uniprot && /^[A-Z0-9]{6,10}$/.test(entry.uniprot) && entry.perResidue.length > 0 && (

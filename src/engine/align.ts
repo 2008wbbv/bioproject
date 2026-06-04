@@ -51,6 +51,7 @@ export function alignByUniprot(
   const q = new Float64Array(n * 3);
   const uniprotNums = new Int32Array(n);
   const plddt = new Float64Array(n);
+  const refBFactor = new Float64Array(n);
 
   for (let i = 0; i < n; i++) {
     const unp = uniqueSorted[i];
@@ -66,7 +67,8 @@ export function alignByUniprot(
     q[i * 3 + 2] = qz;
     uniprotNums[i] = unp;
     plddt[i] = af.bFactor; // AlphaFold B-factor column holds pLDDT
+    refBFactor[i] = exp.bFactor; // experimental B-factor (real crystallographic B)
   }
 
-  return { p, q, uniprotNums, plddt, nMatched: n };
+  return { p, q, uniprotNums, plddt, refBFactor, nMatched: n };
 }
