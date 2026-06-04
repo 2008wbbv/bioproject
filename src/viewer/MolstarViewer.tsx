@@ -18,8 +18,10 @@ import { renderReact18 } from "molstar/lib/mol-plugin-ui/react18";
 import { DefaultPluginUISpec, type PluginUISpec } from "molstar/lib/mol-plugin-ui/spec";
 import type { PluginUIContext } from "molstar/lib/mol-plugin-ui/context";
 import { Color } from "molstar/lib/mol-util/color";
+import { presetStaticComponent } from "molstar/lib/mol-plugin-state/builder/structure/representation-preset";
 import "molstar/build/viewer/molstar.css";
 import type { ViewerModels } from "./prepareModels.ts";
+import { Icon } from "../ui/Icon.tsx";
 
 export type ColorMode = "deviation" | "plddt";
 
@@ -95,6 +97,13 @@ export function MolstarViewer({
         color: "uniform",
         colorParams: { value: EXP_GREY },
       });
+      // Show any bound ligand as ball-and-stick (apo/holo context).
+      try {
+        const lig = await presetStaticComponent(plugin, expStruct, "ligand");
+        if (lig) await plugin.builders.structure.representation.addRepresentation(lig, { type: "ball-and-stick", color: "element-symbol" });
+      } catch {
+        /* no ligand / unsupported */
+      }
       if (cancelled) return;
 
       // AlphaFold model — coloured by the active mode via its B-factor column.
@@ -119,5 +128,21 @@ export function MolstarViewer({
     };
   }, [ready, models, refText, refFormat, mode]);
 
-  return <div ref={containerRef} className="molstar-container" />;
+  async function screenshot() {
+    const uri = await pluginRef.current?.helpers.viewportScreenshot?.getImageDataUri();
+    if (!uri) return;
+    const a = document.createElement("a");
+    a.href = uri;
+    a.download = "openfoldui_view.png";
+    a.click();
+  }
+
+  return (
+    <div className="molstar-wrap">
+      <button className="screenshot-btn" title="Save 3D view as PNG" onClick={() => void screenshot()}>
+        <Icon name="download" size={15} />
+      </button>
+      <div ref={containerRef} className="molstar-container" />
+    </div>
+  );
 }

@@ -145,6 +145,12 @@ Checkboxes reflect actual repo state.
       notifications, keyboard shortcuts + help overlay.
 - [x] **Fold your own sequence** (`src/fold/`): ESMFold queue, pLDDT bar, "use in
       comparison"; `Learn` docs view; **SVG icon set** (no emoji).
+- [x] **More researcher tools**: real **lDDT** (superposition-free, what pLDDT
+      predicts) + pLDDT-vs-lDDT calibration; **distance-difference matrix**;
+      experimental **B-factor vs deviation**; native iterative **TM refinement**;
+      **paper export** (Markdown + SVG figures + BibTeX); residue **annotations**;
+      UniProt **variants** lane; **resizable sidebar**; Mol* **ligand display** +
+      **PNG screenshot**.
 - [x] **Scientific depth**: PAE domain decomposition + per-domain RMSD
       (`engine/paeDomains.ts`, `perDomain.ts`); UniProt feature track
       (`api/uniprotFeatures.ts`); multi-state comparison; secondary-structure
