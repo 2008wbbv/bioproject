@@ -70,6 +70,20 @@ export function MultiStatePanel({ uniprot, alternatives }: { uniprot: string; al
 
   const maxRmsd = Math.max(1, ...rows.map((r) => r.rmsd));
 
+  // Conformational landscape: how much do the experimental states themselves
+  // disagree (a proxy for conformational heterogeneity), and is AlphaFold's single
+  // prediction locked onto one state or stranded between several?
+  const landscape = useMemo(() => {
+    if (rows.length < 2) return null;
+    const rmsds = rows.map((r) => r.rmsd);
+    const min = Math.min(...rmsds);
+    const max = Math.max(...rmsds);
+    const spread = max - min;
+    const second = [...rmsds].sort((a, b) => a - b)[1];
+    const gap = second - min; // how decisively the best state wins
+    return { spread, gap, anyHolo: rows.some((r) => r.holo), anyApo: rows.some((r) => !r.holo) };
+  }, [rows]);
+
   return (
     <div className="multistate-panel">
       <div className="search-head">
@@ -106,6 +120,18 @@ export function MultiStatePanel({ uniprot, alternatives }: { uniprot: string; al
       )}
       {phase === "done" && rows[0] && (
         <p className="muted small"><Icon name="check" size={13} /> Closest experimental state: <strong>{rows[0].pdbId}</strong> ({rows[0].holo ? "holo" : "apo"}, RMSD {rows[0].rmsd.toFixed(2)} Å).</p>
+      )}
+      {phase === "done" && landscape && (
+        <p className="muted small">
+          Conformational landscape: the experimental states span <strong>{landscape.spread.toFixed(1)} Å</strong> of
+          RMSD-to-model.{" "}
+          {landscape.spread < 1.5
+            ? "They're all close — a rigid fold AlphaFold reproduces well in any state."
+            : landscape.gap > 1
+              ? <>The model locks onto <strong>{rows[0].pdbId}</strong> and is markedly further from the others — it predicted one specific conformation.</>
+              : "The model sits between several states — a flexible region where no single experimental conformation dominates."}
+          {landscape.anyHolo && landscape.anyApo ? " The set mixes apo and holo forms, so ligand binding may explain part of the spread." : null}
+        </p>
       )}
     </div>
   );
