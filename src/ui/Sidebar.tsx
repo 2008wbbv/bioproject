@@ -11,6 +11,7 @@ export type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "le
 export function Sidebar({
   view,
   entries,
+  recentEntries,
   collapsed,
   onNavigate,
   onNewComparison,
@@ -20,6 +21,8 @@ export function Sidebar({
 }: {
   view: View;
   entries: WorkspaceEntry[];
+  /** Recently *viewed* entries (most-recent first); falls back to updatedAt. */
+  recentEntries: WorkspaceEntry[];
   collapsed: boolean;
   onNavigate: (v: View) => void;
   onNewComparison: () => void;
@@ -28,7 +31,7 @@ export function Sidebar({
   onShowShortcuts: () => void;
 }) {
   const favorites = entries.filter((e) => e.favorite).slice(0, 8);
-  const recent = [...entries].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 6);
+  const recent = (recentEntries.length ? recentEntries : [...entries].sort((a, b) => b.updatedAt - a.updatedAt)).slice(0, 6);
   const tags = allTags(entries).slice(0, 12);
 
   if (collapsed) return null;

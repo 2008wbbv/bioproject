@@ -8,6 +8,7 @@ import { summarySheet, perResidueSheet, comparisonsSheet } from "./exportData.ts
 import { perResidueCsv, entriesCsv } from "./csv.ts";
 import { serializeWorkspace } from "./backup.ts";
 import { replicationLog } from "./log.ts";
+import { zipStore } from "../zip.ts";
 import type { WorkspaceEntry } from "./types.ts";
 
 function download(filename: string, data: string | Uint8Array, mime: string): void {
@@ -65,4 +66,26 @@ export function exportEntryLog(entry: WorkspaceEntry): void {
 export function exportEntriesLogs(entries: WorkspaceEntry[], name = "logs"): void {
   const logs = entries.map(replicationLog);
   download(`openfoldui-${name}.json`, JSON.stringify({ app: "OpenFoldUI", logs }, null, 2), "application/json");
+}
+
+/**
+ * Export EVERYTHING as a single .zip: the JSON backup, an Excel workbook, a CSV,
+ * replication logs, and one per-residue CSV per comparison.
+ */
+export function exportEverything(entries: WorkspaceEntry[]): void {
+  const enc = new TextEncoder();
+  const text = (name: string, t: string) => ({ name, data: enc.encode(t) });
+  const files = [
+    text("README.txt", `OpenFoldUI export — ${new Date().toISOString()}\n${entries.length} comparisons.\n\n` +
+      `workspace.json   re-importable backup (Dashboard > Import)\ncomparisons.xlsx summary workbook\n` +
+      `comparisons.csv  summary table\nlogs.json        replication logs (provenance + methods)\n` +
+      `per-residue/     one CSV of per-residue pLDDT + deviation per comparison\n`),
+    text("workspace.json", serializeWorkspace(entries)),
+    { name: "comparisons.xlsx", data: buildXlsx([comparisonsSheet(entries)]) },
+    text("comparisons.csv", entriesCsv(entries)),
+    text("logs.json", JSON.stringify({ app: "OpenFoldUI", logs: entries.map(replicationLog) }, null, 2)),
+    ...entries.map((e) => text(`per-residue/${slug(e)}.csv`, perResidueCsv(e))),
+  ];
+  const date = new Date().toISOString().slice(0, 10);
+  download(`openfoldui-export-${date}.zip`, zipStore(files), "application/zip");
 }

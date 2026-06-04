@@ -143,6 +143,12 @@ Checkboxes reflect actual repo state.
 - [x] **App shell** (`src/ui/`): Notion-style collapsible sidebar (favorites /
       recent / tags), top taskbar, **⌘K command palette** (`fuzzy.ts`), toast
       notifications, keyboard shortcuts + help overlay.
+- [x] **Fold your own sequence** (`src/fold/`): ESMFold queue, pLDDT bar, "use in
+      comparison"; `Learn` docs view; **SVG icon set** (no emoji).
+- [x] **Onboarding** first-run tour; **Undo** (toast action) for delete/clear;
+      **jump-back** history + recently-viewed; **Export everything** (.zip bundle:
+      JSON + xlsx + csv + logs + per-residue); dashboard **sparklines** + hero art;
+      subtle animations.
 
 ## Toolchain follow-ups
 

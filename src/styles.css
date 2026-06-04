@@ -1142,3 +1142,54 @@ svg { vertical-align: -0.15em; flex-shrink: 0; }
 .metric, .learn-card, .chart { transition: box-shadow 0.15s ease, transform 0.15s ease; }
 .metric:hover, .learn-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
 .sidebar-navitem, .sidebar-link, .chip, button.link { transition: background 0.12s ease, color 0.12s ease; }
+
+/* ===== toast action (undo) ===== */
+.toast { display: flex; align-items: center; gap: 0.75rem; justify-content: space-between; }
+.toast-action {
+  border: 1px solid currentColor; background: none; color: inherit;
+  border-radius: 6px; padding: 0.2rem 0.6rem; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ===== onboarding ===== */
+.onboard {
+  width: min(480px, 92vw); background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); border-radius: 16px; padding: 2rem;
+  box-shadow: 0 30px 70px rgba(0,0,0,0.4); text-align: center; animation: pop-in 0.2s ease;
+}
+.onboard-art {
+  width: 72px; height: 72px; margin: 0 auto 0.75rem; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel)); color: var(--accent);
+}
+.onboard-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 0.75rem; }
+.onboard-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.15s, transform 0.15s; }
+.onboard-dot.on { background: var(--accent); transform: scale(1.3); }
+.onboard-title { margin: 0 0 0.5rem; font-size: 1.3rem; }
+.onboard-body { color: var(--muted); margin: 0 0 1.5rem; line-height: 1.6; }
+.onboard-actions { display: flex; align-items: center; justify-content: space-between; }
+.onboard-actions-right { display: flex; gap: 0.5rem; }
+.onboard-actions button:not(.link) {
+  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  border-radius: 8px; padding: 0.45rem 1rem; cursor: pointer; font-size: 0.9rem;
+}
+.onboard-actions .primary { background: var(--accent); color: white; border-color: var(--accent); }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ===== hero art ===== */
+.hero-art { max-width: 340px; margin: 0 auto 0.5rem; display: block; }
+.hero-pred { animation: draw 1.6s ease forwards 0.2s; }
+.hero-mark { animation: pulse 2s ease-in-out infinite 1.6s; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes pulse { 0%,100% { opacity: 0.85; r: 6; } 50% { opacity: 0.4; r: 7.5; } }
+
+/* ===== sparkline + accent button ===== */
+.sparkline { display: block; }
+.spark-cell { width: 96px; }
+.accent-btn { border-color: var(--accent) !important; color: var(--accent); font-weight: 600; }
+.topbar-burger:disabled { opacity: 0.35; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-pred, .hero-mark, .fold-view, .learn, .results, .dashboard, .onboard { animation: none; }
+  .hero-pred { stroke-dashoffset: 0; }
+}

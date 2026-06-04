@@ -54,6 +54,9 @@ export interface Workspace {
   setTags: (id: string, tags: string[]) => Promise<void>;
   remove: (id: string) => Promise<void>;
   clear: () => Promise<void>;
+  /** Restore the most recently deleted/cleared entries. Returns count restored. */
+  undoDelete: () => Promise<number>;
+  canUndo: boolean;
   importEntries: (entries: WorkspaceEntry[]) => Promise<number>;
   loadStructures: (id: string) => Promise<StoredStructures | undefined>;
 }
@@ -61,6 +64,8 @@ export interface Workspace {
 export function useWorkspace(): Workspace {
   const [entries, setEntries] = useState<WorkspaceEntry[]>([]);
   const [ready, setReady] = useState(false);
+  // Buffer of the last delete/clear, for undo (entries + their structures).
+  const [trash, setTrash] = useState<{ entries: WorkspaceEntry[]; structures: StoredStructures[] } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,14 +149,33 @@ export function useWorkspace(): Workspace {
   );
 
   const remove = useCallback(async (id: string) => {
+    const e = await db.getEntry(id);
+    const s = await db.getStructures(id);
+    setTrash({ entries: e ? [e] : [], structures: s ? [s] : [] });
     await db.deleteEntry(id);
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEntries((prev) => prev.filter((x) => x.id !== id));
   }, []);
 
   const clear = useCallback(async () => {
+    const all = await db.getAllEntries();
+    const structures = (await Promise.all(all.map((e) => db.getStructures(e.id)))).filter(
+      (s): s is StoredStructures => !!s,
+    );
+    setTrash({ entries: all, structures });
     await db.clearAll();
     setEntries([]);
   }, []);
+
+  const undoDelete = useCallback(async () => {
+    if (!trash) return 0;
+    await db.putEntries(trash.entries);
+    await Promise.all(trash.structures.map((s) => db.putStructures(s)));
+    const all = await db.getAllEntries();
+    setEntries(all);
+    const n = trash.entries.length;
+    setTrash(null);
+    return n;
+  }, [trash]);
 
   const importEntries = useCallback(async (incoming: WorkspaceEntry[]) => {
     await db.putEntries(incoming);
@@ -165,5 +189,18 @@ export function useWorkspace(): Workspace {
     return s ? normalizeStored(s) : undefined;
   }, []);
 
-  return { entries, ready, saveResult, toggleFavorite, setNotes, setTags, remove, clear, importEntries, loadStructures };
+  return {
+    entries,
+    ready,
+    saveResult,
+    toggleFavorite,
+    setNotes,
+    setTags,
+    remove,
+    clear,
+    undoDelete,
+    canUndo: trash !== null,
+    importEntries,
+    loadStructures,
+  };
 }

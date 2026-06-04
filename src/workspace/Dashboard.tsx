@@ -14,10 +14,13 @@ import {
   exportEntriesCsv,
   downloadWorkspaceBackup,
   exportEntriesLogs,
+  exportEverything,
 } from "./export.ts";
 import { parseWorkspace } from "./backup.ts";
 import { Distributions } from "../charts/Distributions.tsx";
 import { Icon } from "../ui/Icon.tsx";
+import { Sparkline } from "../ui/Sparkline.tsx";
+import { HeroArt } from "../ui/HeroArt.tsx";
 
 type SortKey = "proteinName" | "rmsd" | "tmScore" | "gdtTs" | "plddtErrorSpearman" | "nMatched" | "updatedAt";
 
@@ -143,6 +146,7 @@ export function Dashboard({
     return (
       <section className="dashboard">
         <div className="hero">
+          <HeroArt />
           <h2>Welcome to OpenFoldUI</h2>
           <p className="muted">
             Compare a predicted structure against the real one and see where the model was{" "}
@@ -223,13 +227,23 @@ export function Dashboard({
           </button>
         )}
         <span className="muted">{rows.length} shown</span>
+        <button className="accent-btn" onClick={() => { exportEverything(ws.entries); toast("Exported everything as a .zip bundle.", "success"); }} title="Everything: JSON + Excel + CSV + logs + per-residue">
+          <Icon name="download" size={14} /> Export all
+        </button>
         <button onClick={() => exportEntriesXlsx(rows, favOnly ? "favorites" : "comparisons")}>Export Excel</button>
         <button onClick={() => exportEntriesCsv(rows, favOnly ? "favorites" : "comparisons")}>CSV</button>
         <button onClick={() => exportEntriesLogs(rows, "logs")} title="Replication logs (provenance + methods)">Logs</button>
         <button onClick={() => downloadWorkspaceBackup(ws.entries)} title="Back up all comparisons as JSON">Backup</button>
         {importInput}
         <button onClick={() => importRef.current?.click()}>Import</button>
-        <button className="danger" onClick={() => { if (confirm("Clear all saved comparisons? This cannot be undone.")) void ws.clear(); }}>
+        <button
+          className="danger"
+          onClick={async () => {
+            const n = ws.entries.length;
+            await ws.clear();
+            toast(`Cleared ${n} comparison${n === 1 ? "" : "s"}.`, "info", { label: "Undo", run: () => void ws.undoDelete() });
+          }}
+        >
           Clear
         </button>
       </div>
@@ -247,6 +261,7 @@ export function Dashboard({
               <th onClick={() => sortBy("gdtTs")}>GDT{arrow("gdtTs")}</th>
               <th onClick={() => sortBy("plddtErrorSpearman")}>ρ{arrow("plddtErrorSpearman")}</th>
               <th onClick={() => sortBy("nMatched")}>Matched{arrow("nMatched")}</th>
+              <th>Deviation</th>
               <th>Tags</th>
               <th onClick={() => sortBy("updatedAt")}>Updated{arrow("updatedAt")}</th>
               <th></th>
@@ -273,6 +288,12 @@ export function Dashboard({
                 <td>{e.gdtTs.toFixed(3)}</td>
                 <td>{Number.isNaN(e.plddtErrorSpearman) ? "—" : e.plddtErrorSpearman.toFixed(2)}</td>
                 <td>{e.nMatched}</td>
+                <td className="spark-cell">
+                  <Sparkline
+                    values={[...e.perResidue].sort((a, b) => a.uniprotNum - b.uniprotNum).map((r) => r.deviation)}
+                    stroke={e.tmScore >= 0.5 ? "#2563eb" : "#ef4444"}
+                  />
+                </td>
                 <td className="tags-cell">
                   {(e.tags ?? []).map((t) => (
                     <button key={t} className="tag mini" onClick={() => setTag(t)}>{t}</button>
@@ -280,7 +301,17 @@ export function Dashboard({
                 </td>
                 <td className="muted small">{new Date(e.updatedAt).toLocaleDateString()}</td>
                 <td>
-                  <button className="link danger" onClick={() => void ws.remove(e.id)} title="Delete"><Icon name="close" size={14} /></button>
+                  <button
+                    className="link danger"
+                    title="Delete"
+                    onClick={async () => {
+                      const name = e.proteinName;
+                      await ws.remove(e.id);
+                      toast(`Deleted ${name}.`, "info", { label: "Undo", run: () => void ws.undoDelete() });
+                    }}
+                  >
+                    <Icon name="close" size={14} />
+                  </button>
                 </td>
               </tr>
             ))}

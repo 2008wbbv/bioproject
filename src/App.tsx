@@ -3,7 +3,7 @@
  * it, browse past comparisons in a dashboard, view the per-residue data in a sheet,
  * and export to Excel/CSV. Persistence is IndexedDB (src/workspace).
  */
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { runComparison, runCustomComparison, type AlignBy, type PipelineResult, type UploadedFile } from "./api/pipeline.ts";
 import type { RankedStructure } from "./api/pdbe.ts";
 import { ApiError } from "./api/errors.ts";
@@ -24,7 +24,7 @@ import { FoldView } from "./fold/FoldView.tsx";
 import { LearnView } from "./ui/LearnView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
-import { exportEntryXlsx, exportEntryCsv, exportEntryLog } from "./workspace/export.ts";
+import { exportEntryXlsx, exportEntryCsv, exportEntryLog, exportEverything } from "./workspace/export.ts";
 import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
@@ -36,9 +36,15 @@ import { Sidebar } from "./ui/Sidebar.tsx";
 import { TopBar } from "./ui/TopBar.tsx";
 import { CommandPalette, type Command } from "./ui/CommandPalette.tsx";
 import { ShortcutsHelp } from "./ui/ShortcutsHelp.tsx";
+import { Onboarding, hasOnboarded } from "./ui/Onboarding.tsx";
 import { useToast } from "./ui/toast.tsx";
 import { Icon } from "./ui/Icon.tsx";
 import "./styles.css";
+
+interface Loc {
+  view: View;
+  entryId?: string;
+}
 
 const BREADCRUMBS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -98,7 +104,49 @@ export function App() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("openfoldui-sidebar") === "collapsed");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded());
   const [dashTag, setDashTag] = useState<string | null>(null);
+  const [viewedIds, setViewedIds] = useState<string[]>([]);
+  const [backStack, setBackStack] = useState<Loc[]>([]);
+  const prevLoc = useRef<Loc | null>(null);
+  const isBack = useRef(false);
+
+  // Record location history (view + open entry) so the Back button can jump back.
+  useEffect(() => {
+    const cur: Loc = { view, entryId: active?.id };
+    const prev = prevLoc.current;
+    if (prev && (prev.view !== cur.view || prev.entryId !== cur.entryId)) {
+      if (isBack.current) isBack.current = false;
+      else setBackStack((s) => [...s.slice(-29), prev]);
+    }
+    prevLoc.current = cur;
+  }, [view, active?.id]);
+
+  async function openEntryById(id: string) {
+    const e = ws.entries.find((x) => x.id === id);
+    if (e) await openEntry(e);
+  }
+
+  function goBack() {
+    setBackStack((s) => {
+      if (s.length === 0) return s;
+      const loc = s[s.length - 1];
+      isBack.current = true;
+      if (loc.entryId) void openEntryById(loc.entryId);
+      else {
+        setActive(null);
+        setView(loc.view);
+      }
+      return s.slice(0, -1);
+    });
+  }
+
+  const recentEntries = useMemo(
+    () => viewedIds.map((id) => ws.entries.find((e) => e.id === id)).filter((e): e is WorkspaceEntry => !!e),
+    [viewedIds, ws.entries],
+  );
+
+  const recordViewed = (id: string) => setViewedIds((v) => [id, ...v.filter((x) => x !== id)].slice(0, 12));
 
   function toggleSidebar() {
     setCollapsed((c) => {
@@ -124,6 +172,7 @@ export function App() {
       const data = await runComparison(trimmed, pdbId ? { pdbId } : {});
       const entry = await ws.saveResult(trimmed, data);
       setActive({ id: entry.id, structures: structuresOf(entry.id, data), alternatives: data.alternatives });
+      recordViewed(entry.id);
       setStatus("done");
       toast(`${entry.proteinName} vs ${entry.pdbId}: TM ${entry.tmScore.toFixed(2)}, RMSD ${entry.rmsd.toFixed(2)} Å`, "success");
     } catch (e) {
@@ -154,6 +203,7 @@ export function App() {
     setQuery(entry.query);
     const structures = await ws.loadStructures(entry.id);
     setActive({ id: entry.id, structures });
+    recordViewed(entry.id);
     setStatus("done");
     setView("compare");
   }
@@ -207,11 +257,15 @@ export function App() {
     () => [
       { id: "new", label: "New comparison", hint: "from database", run: startNewComparison },
       { id: "upload", label: "Upload your own files", hint: "compare local structures", run: () => { setCompareMode("upload"); setView("compare"); } },
+      { id: "fold", label: "Fold a sequence", hint: "ESMFold", run: () => setView("fold") },
       { id: "dashboard", label: "Go to Dashboard", run: () => setView("dashboard") },
       { id: "batch", label: "Go to Batch", run: () => setView("batch") },
+      { id: "learn", label: "Open Learn / docs", run: () => setView("learn") },
+      { id: "exportall", label: "Export everything", hint: ".zip bundle", run: () => exportEverything(ws.entries) },
+      { id: "tour", label: "Take the tour", run: () => setOnboardOpen(true) },
       { id: "theme", label: "Toggle dark mode", run: () => setTheme(theme === "dark" ? "light" : "dark") },
     ],
-    [theme, setTheme],
+    [theme, setTheme, ws.entries],
   );
 
   const liveEntry = active ? ws.entries.find((e) => e.id === active.id) ?? null : null;
@@ -221,6 +275,7 @@ export function App() {
       <Sidebar
         view={view}
         entries={ws.entries}
+        recentEntries={recentEntries}
         collapsed={collapsed}
         onNavigate={setView}
         onNewComparison={startNewComparison}
@@ -231,6 +286,8 @@ export function App() {
       <div className="main">
         <TopBar
           breadcrumb={BREADCRUMBS[view] ?? "Dashboard"}
+          canBack={backStack.length > 0}
+          onBack={goBack}
           onToggleSidebar={toggleSidebar}
           onOpenPalette={() => setPaletteOpen(true)}
         >
@@ -351,6 +408,12 @@ export function App() {
         onOpenEntry={openEntry}
       />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <Onboarding
+        open={onboardOpen}
+        onClose={() => setOnboardOpen(false)}
+        onTry={(q) => { setOnboardOpen(false); setQuery(q); setCompareMode("database"); void run(q); }}
+        onLearn={() => { setOnboardOpen(false); setView("learn"); }}
+      />
     </div>
   );
 }
