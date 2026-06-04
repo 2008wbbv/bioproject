@@ -49,7 +49,7 @@ const FAQ: Array<[string, React.ReactNode]> = [
   ["Why is the model wrong at a flexible loop?", "Low-pLDDT / disordered regions are often genuinely flexible, and holo binding sites move on ligand binding — high deviation there usually isn't the predictor's fault."],
 ];
 
-export function LearnView() {
+export function LearnView({ onStartTour }: { onStartTour?: () => void }) {
   return (
     <section className="learn">
       <div className="learn-hero">
@@ -60,6 +60,11 @@ export function LearnView() {
             real experimental structure, and find where the model was <em>confidently wrong</em>.
           </p>
         </div>
+        {onStartTour && (
+          <button className="learn-tour-btn primary" onClick={onStartTour}>
+            <Icon name="flask" size={16} /> Start the guided tour
+          </button>
+        )}
       </div>
 
       <nav className="learn-toc">

@@ -52,6 +52,7 @@ import { TopBar } from "./ui/TopBar.tsx";
 import { CommandPalette, type Command } from "./ui/CommandPalette.tsx";
 import { ShortcutsHelp } from "./ui/ShortcutsHelp.tsx";
 import { Onboarding, hasOnboarded } from "./ui/Onboarding.tsx";
+import { GuidedTour } from "./ui/GuidedTour.tsx";
 import { useToast } from "./ui/toast.tsx";
 import { Icon } from "./ui/Icon.tsx";
 import "./styles.css";
@@ -140,6 +141,7 @@ export function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded());
+  const [tourOpen, setTourOpen] = useState(false);
   const [dashTag, setDashTag] = useState<string | null>(null);
   const [dashProject, setDashProject] = useState<string | null>(null);
   const [inspectQuery, setInspectQuery] = useState<string | null>(null);
@@ -315,6 +317,7 @@ export function App() {
       { id: "dashboard", label: "Go to Dashboard", run: () => setView("dashboard") },
       { id: "batch", label: "Go to Batch", run: () => setView("batch") },
       { id: "learn", label: "Open Learn / docs", run: () => setView("learn") },
+      { id: "tour", label: "Start the guided tour", hint: "learn with a real p53 comparison", run: () => setTourOpen(true) },
       { id: "exportall", label: "Export everything", hint: ".zip bundle", run: () => exportEverything(ws.entries) },
       { id: "tour", label: "Take the tour", run: () => setOnboardOpen(true) },
       { id: "theme", label: "Toggle dark mode", run: () => setTheme(theme === "dark" ? "light" : "dark") },
@@ -454,7 +457,7 @@ export function App() {
         />
       )}
 
-      {view === "learn" && <LearnView />}
+      {view === "learn" && <LearnView onStartTour={() => setTourOpen(true)} />}
 
       {view === "inspect" && (
         <InspectView
@@ -488,6 +491,11 @@ export function App() {
         onClose={() => setOnboardOpen(false)}
         onTry={(q) => { setOnboardOpen(false); setQuery(q); setCompareMode("database"); void run(q); }}
         onLearn={() => { setOnboardOpen(false); setView("learn"); }}
+      />
+      <GuidedTour
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onOpenComparison={(q) => { setQuery(q); setCompareMode("database"); void run(q); }}
       />
     </div>
   );
