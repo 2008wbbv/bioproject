@@ -14,6 +14,7 @@ import { PlddtHistogram } from "../charts/PlddtHistogram.tsx";
 import { PaePanel } from "./PaePanel.tsx";
 import { ViewerErrorBoundary } from "../viewer/ErrorBoundary.tsx";
 import { Icon } from "../ui/Icon.tsx";
+import { ExternalLinks } from "./ExternalLinks.tsx";
 
 const ModelViewer = lazy(() => import("../viewer/ModelViewer.tsx").then((m) => ({ default: m.ModelViewer })));
 
@@ -106,7 +107,10 @@ export function InspectView({ onCompare, initialQuery }: { onCompare: (accession
       {status === "done" && data && (
         <div className="results">
           <div className="result-head">
-            <h2>{data.name} <span className="muted">({data.accession})</span></h2>
+            <div>
+              <h2>{data.name} <span className="muted">({data.accession})</span></h2>
+              <ExternalLinks uniprot={data.accession} />
+            </div>
             <div className="export-group">
               <button onClick={downloadModel}><Icon name="download" size={14} /> Model PDB</button>
               <button onClick={() => onCompare(data.accession)}><Icon name="layers" size={14} /> Compare to experimental</button>

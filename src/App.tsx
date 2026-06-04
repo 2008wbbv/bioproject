@@ -39,6 +39,7 @@ import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
 import { AnnotationEditor } from "./components/AnnotationEditor.tsx";
+import { ExternalLinks } from "./components/ExternalLinks.tsx";
 import { SettingsPanel } from "./components/SettingsPanel.tsx";
 import { CompareTwo } from "./components/CompareTwo.tsx";
 import { useTheme } from "./useTheme.ts";
@@ -553,6 +554,7 @@ function Results({
           </button>
           {entry.proteinName} <span className="muted">({entry.uniprot})</span>
         </h2>
+        <ExternalLinks uniprot={entry.uniprot} pdbId={entry.pdbId} />
         <div className="result-actions">
           {alternatives && alternatives.length > 0 && (
             <div className="structure-pick">
