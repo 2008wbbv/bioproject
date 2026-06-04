@@ -33,6 +33,8 @@ export function Dashboard({
   onCompareTwo,
   externalTag,
   onTagConsumed,
+  externalProject,
+  onProjectConsumed,
   examples,
 }: {
   ws: Workspace;
@@ -42,6 +44,8 @@ export function Dashboard({
   onCompareTwo: (a: WorkspaceEntry, b: WorkspaceEntry) => void;
   externalTag?: string | null;
   onTagConsumed?: () => void;
+  externalProject?: string | null;
+  onProjectConsumed?: () => void;
   examples: Array<{ label: string; query: string }>;
 }) {
   const { toast } = useToast();
@@ -66,6 +70,7 @@ export function Dashboard({
   const [favOnly, setFavOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState<string | null>(null);
+  const [project, setProject] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
   const [asc, setAsc] = useState(false);
   const [quick, setQuick] = useState("");
@@ -78,6 +83,13 @@ export function Dashboard({
     }
   }, [externalTag, onTagConsumed]);
 
+  useEffect(() => {
+    if (externalProject) {
+      setProject(externalProject);
+      onProjectConsumed?.();
+    }
+  }, [externalProject, onProjectConsumed]);
+
   const stats = useMemo(() => workspaceStats(ws.entries), [ws.entries]);
   const tags = useMemo(() => allTags(ws.entries), [ws.entries]);
   const favorites = useMemo(() => ws.entries.filter((e) => e.favorite).slice(0, 12), [ws.entries]);
@@ -87,6 +99,7 @@ export function Dashboard({
     let list = ws.entries;
     if (favOnly) list = list.filter((e) => e.favorite);
     if (tag) list = list.filter((e) => (e.tags ?? []).includes(tag));
+    if (project) list = list.filter((e) => e.project === project);
     if (q) {
       list = list.filter(
         (e) =>
@@ -103,7 +116,7 @@ export function Dashboard({
       return (av as number) - (bv as number);
     });
     return asc ? sorted : sorted.reverse();
-  }, [ws.entries, favOnly, search, tag, sortKey, asc]);
+  }, [ws.entries, favOnly, search, tag, project, sortKey, asc]);
 
   function sortBy(key: SortKey) {
     if (key === sortKey) setAsc((v) => !v);
@@ -211,6 +224,13 @@ export function Dashboard({
               {e.proteinName} <span className="muted">· TM {e.tmScore.toFixed(2)}</span>
             </button>
           ))}
+        </div>
+      )}
+
+      {project && (
+        <div className="tag-filter">
+          <span className="muted">Project:</span>
+          <button className="chip on" onClick={() => setProject(null)}>{project} ✕</button>
         </div>
       )}
 

@@ -52,6 +52,7 @@ export interface Workspace {
   toggleFavorite: (id: string) => Promise<void>;
   setNotes: (id: string, notes: string) => Promise<void>;
   setTags: (id: string, tags: string[]) => Promise<void>;
+  setProject: (id: string, project: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
   removeMany: (ids: string[]) => Promise<void>;
   setFavorite: (ids: string[], fav: boolean) => Promise<void>;
@@ -152,6 +153,17 @@ export function useWorkspace(): Workspace {
     [upsertLocal],
   );
 
+  const setProject = useCallback(
+    async (id: string, project: string) => {
+      const e = await db.getEntry(id);
+      if (!e) return;
+      const updated = { ...e, project: project.trim() || undefined };
+      await db.putEntry(updated);
+      upsertLocal(updated);
+    },
+    [upsertLocal],
+  );
+
   const remove = useCallback(async (id: string) => {
     const e = await db.getEntry(id);
     const s = await db.getStructures(id);
@@ -236,6 +248,7 @@ export function useWorkspace(): Workspace {
     toggleFavorite,
     setNotes,
     setTags,
+    setProject,
     remove,
     removeMany,
     setFavorite,

@@ -17,6 +17,7 @@ export function Sidebar({
   onNewComparison,
   onOpenEntry,
   onSelectTag,
+  onSelectProject,
   onShowShortcuts,
 }: {
   view: View;
@@ -28,8 +29,10 @@ export function Sidebar({
   onNewComparison: () => void;
   onOpenEntry: (e: WorkspaceEntry) => void;
   onSelectTag: (tag: string) => void;
+  onSelectProject: (project: string) => void;
   onShowShortcuts: () => void;
 }) {
+  const projects = [...new Set(entries.map((e) => e.project).filter((p): p is string => !!p))].sort();
   const favorites = entries.filter((e) => e.favorite).slice(0, 8);
   const recent = (recentEntries.length ? recentEntries : [...entries].sort((a, b) => b.updatedAt - a.updatedAt)).slice(0, 6);
   const tags = allTags(entries).slice(0, 12);
@@ -67,6 +70,17 @@ export function Sidebar({
             <button key={e.id} className="sidebar-link" onClick={() => onOpenEntry(e)} title={e.proteinName}>
               <span className="sidebar-link-text">{e.proteinName}</span>
               <span className="muted sidebar-link-meta">{e.tmScore.toFixed(2)}</span>
+            </button>
+          ))}
+        </Section>
+      )}
+
+      {projects.length > 0 && (
+        <Section title="Projects">
+          {projects.map((p) => (
+            <button key={p} className="sidebar-link" onClick={() => onSelectProject(p)} title={p}>
+              <Icon name="grid" size={13} />
+              <span className="sidebar-link-text">{p}</span>
             </button>
           ))}
         </Section>

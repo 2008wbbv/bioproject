@@ -43,6 +43,8 @@ export interface WorkspaceEntry {
   notes: string;
   /** Free-form tags for organizing studies (e.g. "kinases", "paper-2026"). */
   tags?: string[];
+  /** Optional single-value collection/project grouping. */
+  project?: string;
 
   // Summary metrics (for the dashboard table + export).
   rmsd: number;

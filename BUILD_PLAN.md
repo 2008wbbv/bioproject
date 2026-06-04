@@ -145,6 +145,18 @@ Checkboxes reflect actual repo state.
       notifications, keyboard shortcuts + help overlay.
 - [x] **Fold your own sequence** (`src/fold/`): ESMFold queue, pLDDT bar, "use in
       comparison"; `Learn` docs view; **SVG icon set** (no emoji).
+- [x] **Scientific depth**: PAE domain decomposition + per-domain RMSD
+      (`engine/paeDomains.ts`, `perDomain.ts`); UniProt feature track
+      (`api/uniprotFeatures.ts`); multi-state comparison; secondary-structure
+      breakdown (`engine/secondaryStructure.ts`); binding-site impact
+      (`engine/bindingSite.ts`); pLDDT calibration (`analysis.calibrationCurve`).
+- [x] **Reporting / product**: one-click HTML report (`workspace/report.ts`);
+      installable **PWA** (offline); per-comparison **URL routing** (#entry=);
+      **bulk dashboard actions** (star/tag/export/delete + undo); **projects**.
+- [ ] **Worker-based batch**: intentionally not done — the pipeline is
+      network-bound (engine compute is ~ms), so a Web Worker pool wouldn't reduce
+      latency; the main-thread promise pool is the right design. Revisit only if a
+      future CPU-heavy step (e.g. native refinement) lands.
 - [x] **Onboarding** first-run tour; **Undo** (toast action) for delete/clear;
       **jump-back** history + recently-viewed; **Export everything** (.zip bundle:
       JSON + xlsx + csv + logs + per-residue); dashboard **sparklines** + hero art;

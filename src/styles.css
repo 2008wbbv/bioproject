@@ -1260,3 +1260,10 @@ svg { vertical-align: -0.15em; flex-shrink: 0; }
 }
 .bulk-bar button.primary { background: var(--accent); color: white; border-color: var(--accent); }
 .bulk-bar button.link { border: none; background: none; }
+
+/* ===== project editor ===== */
+.project-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.project-input {
+  border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.5rem;
+  font-size: 0.85rem; background: var(--panel); color: var(--text); width: 14rem;
+}

@@ -112,6 +112,7 @@ export function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded());
   const [dashTag, setDashTag] = useState<string | null>(null);
+  const [dashProject, setDashProject] = useState<string | null>(null);
   const [viewedIds, setViewedIds] = useState<string[]>([]);
   const [backStack, setBackStack] = useState<Loc[]>([]);
   const prevLoc = useRef<Loc | null>(null);
@@ -302,6 +303,7 @@ export function App() {
         onNewComparison={startNewComparison}
         onOpenEntry={openEntry}
         onSelectTag={(t) => { setDashTag(t); setView("dashboard"); }}
+        onSelectProject={(p) => { setDashProject(p); setView("dashboard"); }}
         onShowShortcuts={() => setHelpOpen(true)}
       />
       <div className="main">
@@ -380,6 +382,8 @@ export function App() {
               onToggleFavorite={() => void ws.toggleFavorite(liveEntry.id)}
               onNotes={(n) => void ws.setNotes(liveEntry.id, n)}
               onTags={(t) => void ws.setTags(liveEntry.id, t)}
+              onProject={(p) => void ws.setProject(liveEntry.id, p)}
+              projectOptions={[...new Set(ws.entries.map((e) => e.project).filter((p): p is string => !!p))]}
               onCompareAccession={(acc) => { setQuery(acc); void run(acc); }}
             />
           )}
@@ -395,6 +399,8 @@ export function App() {
           onCompareTwo={(a, b) => { setPair([a, b]); setView("compare2"); }}
           externalTag={dashTag}
           onTagConsumed={() => setDashTag(null)}
+          externalProject={dashProject}
+          onProjectConsumed={() => setDashProject(null)}
           examples={EXAMPLES}
         />
       )}
@@ -447,6 +453,8 @@ function Results({
   onToggleFavorite,
   onNotes,
   onTags,
+  onProject,
+  projectOptions,
   onCompareAccession,
 }: {
   entry: WorkspaceEntry;
@@ -456,6 +464,8 @@ function Results({
   onToggleFavorite: () => void;
   onNotes: (notes: string) => void;
   onTags: (tags: string[]) => void;
+  onProject: (project: string) => void;
+  projectOptions: string[];
   onCompareAccession: (accession: string) => void;
 }) {
   const { toast } = useToast();
@@ -594,6 +604,17 @@ function Results({
         />
       )}
 
+      <div className="project-row">
+        <span className="tag-label muted">Project:</span>
+        <input
+          className="project-input"
+          list="ofu-projects"
+          defaultValue={entry.project ?? ""}
+          placeholder="none"
+          onBlur={(e) => { if ((e.target.value.trim() || "") !== (entry.project ?? "")) onProject(e.target.value); }}
+        />
+        <datalist id="ofu-projects">{projectOptions.map((p) => <option key={p} value={p} />)}</datalist>
+      </div>
       <TagEditor tags={entry.tags ?? []} onChange={onTags} />
       <NotesEditor value={entry.notes} onSave={onNotes} />
 
