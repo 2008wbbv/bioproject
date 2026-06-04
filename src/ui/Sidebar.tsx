@@ -6,7 +6,7 @@ import type { WorkspaceEntry } from "../workspace/types.ts";
 import { allTags } from "../workspace/stats.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 
-export type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn" | "inspect" | "dataset";
+export type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn" | "inspect" | "dataset" | "gallery";
 
 export function Sidebar({
   view,
@@ -57,6 +57,7 @@ export function Sidebar({
         <NavItem icon="list" label="Dataset" active={view === "dataset"} onClick={() => onNavigate("dataset")} />
         <NavItem icon="list" label="Batch" active={view === "batch"} onClick={() => onNavigate("batch")} />
         <NavItem icon="beaker" label="Fold sequence" active={view === "fold"} onClick={() => onNavigate("fold")} />
+        <NavItem icon="star" label="Gallery" active={view === "gallery"} onClick={() => onNavigate("gallery")} />
         <NavItem icon="book" label="Learn" active={view === "learn"} onClick={() => onNavigate("learn")} />
       </nav>
 
