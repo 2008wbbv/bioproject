@@ -105,6 +105,7 @@ export function useWorkspace(): Workspace {
         modelCaPdb: data.modelCaPdb,
         refCaPdb: data.refCaPdb,
         paeUrl: data.paeUrl,
+        matched: data.matched,
         superposition: data.superposition,
       });
       upsertLocal(entry);

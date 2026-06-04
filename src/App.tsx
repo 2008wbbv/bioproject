@@ -18,6 +18,7 @@ import { ConfidenceSummary } from "./components/ConfidenceSummary.tsx";
 import { UploadPanel } from "./components/UploadPanel.tsx";
 import { SearchPanel } from "./search/SearchPanel.tsx";
 import { PaePanel } from "./components/PaePanel.tsx";
+import { DomainPanel } from "./components/DomainPanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { FoldView } from "./fold/FoldView.tsx";
@@ -66,6 +67,7 @@ function structuresOf(id: string, data: PipelineResult): StoredStructures {
     modelCaPdb: data.modelCaPdb,
     refCaPdb: data.refCaPdb,
     paeUrl: data.paeUrl,
+    matched: data.matched,
     superposition: data.superposition,
   };
 }
@@ -603,6 +605,10 @@ function Results({
           nativeTm={entry.tmScore}
           nativeRmsd={entry.rmsd}
         />
+      )}
+
+      {structures?.paeUrl && structures.matched && (
+        <DomainPanel paeUrl={structures.paeUrl} matched={structures.matched} globalRmsd={entry.rmsd} />
       )}
 
       {structures?.paeUrl && <PaePanel paeUrl={structures.paeUrl} />}

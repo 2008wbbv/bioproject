@@ -25,6 +25,13 @@ import { fetchAlphaFold } from "./alphafold.ts";
 import { fetchBestStructures, fetchSiftsMappings, type RankedStructure } from "./pdbe.ts";
 import { fetchExperimentalStructure } from "./structure.ts";
 
+/** Matched Cα coordinates, parallel arrays (p/q interleaved xyz). */
+export interface MatchedCoords {
+  uniprotNums: number[];
+  p: number[];
+  q: number[];
+}
+
 export interface PipelineResult {
   result: ComparisonResult;
   superposition: import("../engine/types.ts").Superposition;
@@ -37,6 +44,9 @@ export interface PipelineResult {
   /** CA-only PDBs for format-safe TM-align validation. */
   modelCaPdb: string;
   refCaPdb: string;
+  /** Matched Cα coordinates (interleaved xyz) + UniProt numbers, for per-domain
+   *  / per-region re-superposition. */
+  matched: MatchedCoords;
   proteinName: string;
   chosenChain: string;
   source: ComparisonSource;
@@ -133,6 +143,11 @@ function assembleComparison(
     refFormat: meta.refFormat,
     modelCaPdb: caPdbFromResidues(model.residues),
     refCaPdb: caPdbFromResidues(chainResidues, chosenChain),
+    matched: {
+      uniprotNums: Array.from(alignment.uniprotNums),
+      p: Array.from(alignment.p),
+      q: Array.from(alignment.q),
+    },
     proteinName: meta.proteinName,
     chosenChain,
     source: meta.source,

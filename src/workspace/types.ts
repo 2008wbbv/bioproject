@@ -82,6 +82,8 @@ export interface StoredStructures {
   refCaPdb?: string;
   /** AlphaFold PAE JSON URL (database/AlphaFold entries only). */
   paeUrl?: string;
+  /** Matched Cα coordinates for per-domain / per-region re-superposition. */
+  matched?: { uniprotNums: number[]; p: number[]; q: number[] };
 
   // --- legacy fields (read-only back-compat) ---
   afPdbText?: string;
