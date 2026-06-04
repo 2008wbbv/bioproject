@@ -47,7 +47,22 @@ export function Dashboard({
   const { toast } = useToast();
   const [selected, setSelected] = useState<string[]>([]);
   const toggleSelect = (id: string) =>
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(-2)));
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const clearSelection = () => setSelected([]);
+
+  async function bulkDelete() {
+    const ids = [...selected];
+    await ws.removeMany(ids);
+    clearSelection();
+    toast(`Deleted ${ids.length} comparison${ids.length === 1 ? "" : "s"}.`, "info", { label: "Undo", run: () => void ws.undoDelete() });
+  }
+  async function bulkTag() {
+    const tag = prompt("Tag to add to selected comparisons:");
+    if (tag) {
+      await ws.addTagMany(selected, tag);
+      toast(`Tagged ${selected.length} with "${tag.trim()}".`, "success");
+    }
+  }
   const [favOnly, setFavOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState<string | null>(null);
@@ -217,18 +232,6 @@ export function Dashboard({
           <input type="checkbox" checked={favOnly} onChange={(e) => setFavOnly(e.target.checked)} /> Favorites only
         </label>
         <div className="spacer" />
-        {selected.length === 2 && (
-          <button
-            className="primary compare-sel"
-            onClick={() => {
-              const a = ws.entries.find((e) => e.id === selected[0]);
-              const b = ws.entries.find((e) => e.id === selected[1]);
-              if (a && b) onCompareTwo(a, b);
-            }}
-          >
-            Compare selected (2)
-          </button>
-        )}
         <span className="muted">{rows.length} shown</span>
         <button className="accent-btn" onClick={() => { exportEverything(ws.entries); toast("Exported everything as a .zip bundle.", "success"); }} title="Everything: JSON + Excel + CSV + logs + per-residue">
           <Icon name="download" size={14} /> Export all
@@ -250,6 +253,29 @@ export function Dashboard({
           Clear
         </button>
       </div>
+
+      {selected.length > 0 && (
+        <div className="bulk-bar">
+          <span><strong>{selected.length}</strong> selected</span>
+          {selected.length === 2 && (
+            <button
+              className="primary"
+              onClick={() => {
+                const a = ws.entries.find((e) => e.id === selected[0]);
+                const b = ws.entries.find((e) => e.id === selected[1]);
+                if (a && b) onCompareTwo(a, b);
+              }}
+            >
+              Compare 2
+            </button>
+          )}
+          <button onClick={() => void ws.setFavorite(selected, true)}><Icon name="star" size={13} /> Star</button>
+          <button onClick={() => void bulkTag()}><Icon name="tag" size={13} /> Tag</button>
+          <button onClick={() => exportEntriesXlsx(ws.entries.filter((e) => selected.includes(e.id)), "selected")}>Export</button>
+          <button className="danger" onClick={() => void bulkDelete()}>Delete</button>
+          <button className="link" onClick={clearSelection}>Clear</button>
+        </div>
+      )}
 
       <div className="dash-scroll">
         <table>

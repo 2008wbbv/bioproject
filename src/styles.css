@@ -1246,3 +1246,17 @@ svg { vertical-align: -0.15em; flex-shrink: 0; }
 .ss-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
 .ss-fill { height: 100%; transition: width 0.4s ease; }
 .calibration-card { margin-bottom: 1.5rem; }
+
+/* ===== bulk action bar ===== */
+.bulk-bar {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  border: 1px solid var(--accent); border-radius: 10px; padding: 0.5rem 0.9rem; margin-bottom: 0.75rem;
+  animation: fade-in 0.18s ease;
+}
+.bulk-bar button {
+  border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  border-radius: 7px; padding: 0.3rem 0.7rem; cursor: pointer; font-size: 0.85rem;
+}
+.bulk-bar button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.bulk-bar button.link { border: none; background: none; }

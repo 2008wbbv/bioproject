@@ -36,7 +36,7 @@ import { TagEditor } from "./components/TagEditor.tsx";
 import { SettingsPanel } from "./components/SettingsPanel.tsx";
 import { CompareTwo } from "./components/CompareTwo.tsx";
 import { useTheme } from "./useTheme.ts";
-import { parseCompareHash, compareUrl } from "./permalink.ts";
+import { parseCompareHash, compareUrl, parseEntryHash, encodeEntryHash } from "./permalink.ts";
 import { Sidebar } from "./ui/Sidebar.tsx";
 import { TopBar } from "./ui/TopBar.tsx";
 import { CommandPalette, type Command } from "./ui/CommandPalette.tsx";
@@ -212,18 +212,33 @@ export function App() {
     recordViewed(entry.id);
     setStatus("done");
     setView("compare");
+    history.replaceState(null, "", encodeEntryHash(entry.id));
   }
 
-  // Open a comparison from a shared permalink (#compare=…) on first load.
+  // Open a comparison from a shared permalink (#compare=… or #entry=…) on load.
+  const routedRef = useRef(false);
   useEffect(() => {
+    if (routedRef.current) return;
     const link = parseCompareHash(location.hash);
     if (link) {
+      routedRef.current = true;
       setQuery(link.query);
       setCompareMode("database");
       void run(link.query, link.pdbId);
+      return;
+    }
+    const entryId = parseEntryHash(location.hash);
+    if (entryId && ws.ready) {
+      const e = ws.entries.find((x) => x.id === entryId);
+      if (e) {
+        routedRef.current = true;
+        void openEntry(e);
+      } else {
+        routedRef.current = true; // entry not found; don't keep retrying
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ws.ready, ws.entries]);
 
   // Global keyboard shortcuts. ⌘K works everywhere; single-key shortcuts only
   // fire when not typing in a field.

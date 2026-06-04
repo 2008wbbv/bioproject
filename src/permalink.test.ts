@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { encodeCompareHash, parseCompareHash } from "./permalink.ts";
+import { encodeCompareHash, parseCompareHash, encodeEntryHash, parseEntryHash } from "./permalink.ts";
 
 describe("permalink encode/decode", () => {
   it("round-trips a query", () => {
@@ -20,5 +20,11 @@ describe("permalink encode/decode", () => {
   it("returns null for an empty or unrelated hash", () => {
     expect(parseCompareHash("")).toBeNull();
     expect(parseCompareHash("#foo=bar")).toBeNull();
+  });
+
+  it("round-trips an entry route id (including custom: ids)", () => {
+    expect(parseEntryHash(encodeEntryHash("P04637:2OCJ:A"))).toBe("P04637:2OCJ:A");
+    expect(parseEntryHash(encodeEntryHash("custom:x:y:A"))).toBe("custom:x:y:A");
+    expect(parseEntryHash("#compare=p53")).toBeNull();
   });
 });

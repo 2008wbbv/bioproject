@@ -53,6 +53,9 @@ export interface Workspace {
   setNotes: (id: string, notes: string) => Promise<void>;
   setTags: (id: string, tags: string[]) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  removeMany: (ids: string[]) => Promise<void>;
+  setFavorite: (ids: string[], fav: boolean) => Promise<void>;
+  addTagMany: (ids: string[], tag: string) => Promise<void>;
   clear: () => Promise<void>;
   /** Restore the most recently deleted/cleared entries. Returns count restored. */
   undoDelete: () => Promise<number>;
@@ -167,6 +170,42 @@ export function useWorkspace(): Workspace {
     setEntries([]);
   }, []);
 
+  const removeMany = useCallback(async (ids: string[]) => {
+    const entriesToDel = (await Promise.all(ids.map((id) => db.getEntry(id)))).filter(
+      (e): e is WorkspaceEntry => !!e,
+    );
+    const structures = (await Promise.all(ids.map((id) => db.getStructures(id)))).filter(
+      (s): s is StoredStructures => !!s,
+    );
+    setTrash({ entries: entriesToDel, structures });
+    await Promise.all(ids.map((id) => db.deleteEntry(id)));
+    setEntries((prev) => prev.filter((e) => !ids.includes(e.id)));
+  }, []);
+
+  const setFavorite = useCallback(
+    async (ids: string[], fav: boolean) => {
+      const updated = (await Promise.all(ids.map((id) => db.getEntry(id))))
+        .filter((e): e is WorkspaceEntry => !!e)
+        .map((e) => ({ ...e, favorite: fav }));
+      await db.putEntries(updated);
+      for (const e of updated) upsertLocal(e);
+    },
+    [upsertLocal],
+  );
+
+  const addTagMany = useCallback(
+    async (ids: string[], tag: string) => {
+      const t = tag.trim();
+      if (!t) return;
+      const updated = (await Promise.all(ids.map((id) => db.getEntry(id))))
+        .filter((e): e is WorkspaceEntry => !!e)
+        .map((e) => ({ ...e, tags: [...new Set([...(e.tags ?? []), t])] }));
+      await db.putEntries(updated);
+      for (const e of updated) upsertLocal(e);
+    },
+    [upsertLocal],
+  );
+
   const undoDelete = useCallback(async () => {
     if (!trash) return 0;
     await db.putEntries(trash.entries);
@@ -198,6 +237,9 @@ export function useWorkspace(): Workspace {
     setNotes,
     setTags,
     remove,
+    removeMany,
+    setFavorite,
+    addTagMany,
     clear,
     undoDelete,
     canUndo: trash !== null,

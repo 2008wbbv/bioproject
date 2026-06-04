@@ -30,3 +30,16 @@ export function compareUrl(link: CompareLink): string {
   const base = typeof location !== "undefined" ? location.href.split("#")[0] : "";
   return base + encodeCompareHash(link);
 }
+
+/** Parse a saved-entry route (#entry=<id>). */
+export function parseEntryHash(hash: string): string | null {
+  const h = hash.startsWith("#") ? hash.slice(1) : hash;
+  const id = new URLSearchParams(h).get("entry");
+  return id || null;
+}
+
+export function encodeEntryHash(id: string): string {
+  const p = new URLSearchParams();
+  p.set("entry", id);
+  return `#${p.toString()}`;
+}
