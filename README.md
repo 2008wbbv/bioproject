@@ -1,99 +1,117 @@
-# OpenFoldUI
+<div align="center">
 
-A **client-only** web tool that compares a predicted protein structure — from
-AlphaFold-DB **or your own uploaded model** — against the best experimental
-structure and quantifies the agreement: RMSD, TM-score, GDT-TS, per-residue
-deviation, and — the scientific payload — the **Spearman correlation between pLDDT
-and actual per-residue error**.
+<img src="docs/banner.svg" alt="OpenFoldUI" width="100%" />
 
-The story it tells: where the model was *confidently wrong* — high pLDDT (the model
-was sure) but high deviation (it was off anyway).
+<br/>
 
-Built for labs: **upload your own structures**, a persistent **workspace** (history,
-favorites, notes), **batch mode**, **Foldseek** structure search, an in-app **data
-sheet**, **Excel/CSV export**, **workspace JSON backup/import**, **superposed-PDB
-download**, and per-comparison **replication logs** (provenance + a methods
-paragraph) so analyses can be reproduced.
+**Compare a _predicted_ protein structure against the _experimental_ one — and see where the model was _confidently wrong_.**
 
-> **Status:** all spec phases are built and tested — the comparison engine, the API
-> layer + pipeline, the single-protein UI (metrics, Observable Plot charts,
-> lazy-loaded Mol* 3D overlay), a persistent **workspace** (history, favorites,
-> notes, Excel/CSV export), **batch mode**, **Foldseek** structure search, and a
-> **tmalign-wasm** validation backend that agrees with the native engine to ~0.001
-> TM-score. See [`BUILD_PLAN.md`](BUILD_PLAN.md). [`SPEC.md`](SPEC.md) is the source
-> of truth; [`CLAUDE.md`](CLAUDE.md) is the summary.
+[![tests](https://img.shields.io/badge/tests-198%20passing-22c55e)](#testing)
+[![architecture](https://img.shields.io/badge/architecture-client--only-2563eb)](#architecture)
+[![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-7c3aed)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)]()
+[![backend](https://img.shields.io/badge/backend-none-64748b)]()
+[![license](https://img.shields.io/badge/license-MIT-0ea5e9)](LICENSE)
+
+</div>
+
+---
+
+OpenFoldUI fetches an **AlphaFold** model (or takes **your own file**), pulls the best
+**experimental** structure of the same protein, superposes them, and quantifies the
+agreement — **RMSD, TM-score, GDT-TS, lDDT**, and the scientific payload: the
+**correlation between AlphaFold's confidence (pLDDT) and its actual per-residue
+error**. Everything runs in your browser. There is no backend.
+
+> The headline question it answers: *where was the model **confident but wrong*** —
+> high pLDDT yet far from the real structure.
 
 ## Quick start
 
 ```bash
 npm install
+npm run dev          # http://localhost:5173
 ```
 
-### Easiest way to run the app
+Type a protein name or UniProt accession (e.g. `p53` or `P04637`), click an example,
+**upload your own** model + reference, or **fold a sequence**. See the metrics, the
+calibration charts, the per-residue tracks, and a 3D overlay you can recolour.
+
+Run the engine headlessly on real data (no browser):
 
 ```bash
-npm run dev        # http://localhost:5173
+npx vite-node scripts/validate.ts                # p53 (P04637) vs 2OCJ
+npx vite-node scripts/validate.ts P24941 6q4g    # any UNIPROT [PDB]
 ```
 
-Type a protein name or UniProt accession (e.g. `p53` or `P04637`), or click an
-example. You get the metrics, the pLDDT-vs-deviation scatter (with a "confidently
-wrong" quadrant), a per-residue deviation track, and a 3D overlay you can toggle
-between deviation and pLDDT coloring. Everything runs in the browser.
+## What it does
 
-### See the engine work headlessly (no browser)
+**Core comparison**
+- AlphaFold-DB lookup, best-experimental-structure selection (X-ray > coverage > resolution), SIFTS numbering done right (per-atom UniProt numbers from PDBe updated mmCIF).
+- From-scratch engine: Kabsch superposition, **RMSD · TM-score · GDT-TS · lDDT**, per-residue deviation, and **Spearman(pLDDT, error)** — validated against canonical **TM-align** (WASM) to ~0.001 TM-score.
+- Mol\* 3D overlay (deviation / pLDDT colouring, bound-ligand display, PNG screenshot).
 
-This fetches AlphaFold + the experimental structure for a UniProt accession and runs
-the full pipeline (parse → map UniProt numbers → align → compare), printing every
-metric. No browser, no setup beyond `npm install`.
+**Deeper science**
+- **lDDT** (superposition-free) with the correct **pLDDT-vs-lDDT calibration** plot.
+- **PAE domain decomposition** + per-domain RMSD (catches "domains right, orientation wrong").
+- **Distance-difference matrix** (contact-map comparison) for topological errors.
+- **Secondary-structure** breakdown, **binding-site** impact, **B-factor vs deviation**, **divergent regions**, workspace-wide **confidence calibration**.
+- **UniProt feature track** (domains, sites, modifications, variants); **multi-state** comparison ("which state did AlphaFold predict?").
+
+**Bring your own data**
+- Upload `.pdb`/`.cif` models + references; align by author numbering, UniProt, or **sequence** (Needleman–Wunsch).
+- **Fold a sequence** with a persistent queue — ESMFold by default, or point it at your own AlphaFold/ColabFold endpoint.
+- **Batch** mode over many IDs with live distributions; CSV/column import.
+
+**A real workspace**
+- IndexedDB history with **favorites, tags, projects, notes, annotations**; a dashboard with stats, sparklines, and a tag/project filter.
+- Command palette (⌘K), keyboard shortcuts, onboarding tour, undo, jump-back, dark mode, installable **PWA**.
+- Export everything: Excel/CSV, **per-comparison reports (HTML→PDF)**, a **paper bundle** (Markdown + SVG figures + BibTeX), replication **logs**, JSON backup, and a full **.zip**.
+
+## Architecture
+
+Pure, headless engine at the core; everything else is a thin layer around it.
+
+| Layer | Path | Notes |
+| --- | --- | --- |
+| Engine | `src/engine/` | Pure math + parsing. No DOM, no network, no Mol\*. Fully unit-tested. |
+| API | `src/api/` | One typed module per source (UniProt, PDBe, RCSB, AlphaFold) + `pipeline.ts`. |
+| Viewer | `src/viewer/` | Lazy, error-boundaried Mol\* wrapper. |
+| Charts | `src/charts/` | Observable Plot. |
+| Workspace | `src/workspace/` | IndexedDB persistence, export, reports, paper bundle. |
+| Batch / Fold / Search | `src/batch/`, `src/fold/`, `src/search/` | Bounded-concurrency pools; ESMFold; Foldseek. |
+| UI shell | `src/ui/` | Sidebar, top bar, command palette, toasts, onboarding. |
+
+`SPEC.md` is the source of truth · `CLAUDE.md` the summary · `BUILD_PLAN.md` the status · `docs/PHASE0.md` the de-risking + real-data validation.
+
+## Tech stack
+
+React · TypeScript (strict) · Vite · Vitest · Mol\* · Observable Plot · `ml-matrix` ·
+`idb` · `tmalign-wasm` · ESMFold/Foldseek (best-effort) — **no backend, no tracking,
+no accounts.**
+
+## Testing
 
 ```bash
-npx vite-node scripts/validate.ts                # default: p53 (P04637) vs 2OCJ
-npx vite-node scripts/validate.ts P24941 6q4g    # any UNIPROT [PDB_ID]
+npm test          # 198 unit tests (engine, api, workspace, batch, fold, search)
+npm run typecheck # tsc --noEmit
+npm run build     # production build (Mol* + tmalign are lazy chunks)
 ```
 
-Example output (p53 DNA-binding domain):
+The from-scratch engine is verified two ways: known-answer unit tests for every
+metric, and a real-data run (p53/2OCJ → RMSD 0.51 Å, TM 0.99, GDT 0.99) that agrees
+with TM-align.
 
-```
-Protein:              P04637 vs 2OCJ
-Matched CA pairs:     194
-RMSD:                 0.506 A
-TM-score:             0.9909
-GDT-TS:               0.9884
-pLDDT-error Spearman: -0.5622   (confident residues deviate less)
-```
-
-### Run the test suite (no network)
-
-48 unit tests covering every metric with known-answer cases:
-
-```bash
-npm test
-```
-
-## All commands
+## Commands
 
 | Command | What it does |
-|---|---|
-| `npm install` | Install dependencies |
-| `npm run dev` | Vite dev server — the full app |
-| `npx vite-node scripts/validate.ts [UNIPROT] [PDB]` | Headless real-data engine validation |
-| `npm test` | Vitest engine + api + viewer-prep suite (71 tests, network-free) |
+| --- | --- |
+| `npm run dev` | Dev server — the full app |
+| `npm test` | Vitest suite (network-free) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run build` | Production build to `dist/` (Mol* is a lazy chunk) |
+| `npm run build` | Production build to `dist/` |
+| `npx vite-node scripts/validate.ts [UNIPROT] [PDB]` | Headless real-data validation |
 
-## How it works
+## License
 
-```
-UniProt ID
-  → AlphaFold model (.pdb, numbered by UniProt)        parse.ts
-  → experimental structure (PDBe updated .cif,         parseCif.ts
-    every atom carries its UniProt number via SIFTS)
-  → inner-join both on UniProt residue number          align.ts
-  → Kabsch superposition + RMSD / TM / GDT / Spearman  compare.ts
-```
-
-Everything runs in the browser. The only optional server-side piece is Foldseek
-search (SPEC §11), isolated in `src/search/` and never a core dependency.
-
-See [`docs/PHASE0.md`](docs/PHASE0.md) for the CORS/endpoint verification and the
-real-data validation results.
+[MIT](LICENSE)
