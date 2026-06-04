@@ -4,7 +4,7 @@
  * .cif files; the same engine computes every metric. Both are assumed to be the
  * same protein with shared residue numbering.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { detectFormat } from "../engine/format.ts";
 import type { AlignBy, UploadedFile } from "../api/pipeline.ts";
 
@@ -65,14 +65,21 @@ function FileDrop({
 export function UploadPanel({
   onCompare,
   busy,
+  initialModel,
 }: {
   onCompare: (model: UploadedFile, ref: UploadedFile, uniprot: string | undefined, alignBy: AlignBy) => void;
   busy: boolean;
+  /** Pre-filled model (e.g. handed over from the Fold view). */
+  initialModel?: UploadedFile | null;
 }) {
-  const [model, setModel] = useState<UploadedFile | null>(null);
+  const [model, setModel] = useState<UploadedFile | null>(initialModel ?? null);
   const [ref, setRef] = useState<UploadedFile | null>(null);
   const [uniprot, setUniprot] = useState("");
   const [alignBy, setAlignBy] = useState<AlignBy>("auto");
+
+  useEffect(() => {
+    if (initialModel) setModel(initialModel);
+  }, [initialModel]);
 
   return (
     <div className="upload-panel">

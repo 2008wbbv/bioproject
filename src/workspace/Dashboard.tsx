@@ -17,6 +17,7 @@ import {
 } from "./export.ts";
 import { parseWorkspace } from "./backup.ts";
 import { Distributions } from "../charts/Distributions.tsx";
+import { Icon } from "../ui/Icon.tsx";
 
 type SortKey = "proteinName" | "rmsd" | "tmScore" | "gdtTs" | "plddtErrorSpearman" | "nMatched" | "updatedAt";
 
@@ -182,7 +183,7 @@ export function Dashboard({
 
       {favorites.length > 0 && (
         <div className="fav-strip">
-          <span className="muted">★ Favorites:</span>
+          <span className="muted"><Icon name="star" size={13} filled /> Favorites</span>
           {favorites.map((e) => (
             <button key={e.id} className="chip" onClick={() => onOpen(e)}>
               {e.proteinName} <span className="muted">· TM {e.tmScore.toFixed(2)}</span>
@@ -206,7 +207,7 @@ export function Dashboard({
       <div className="dash-toolbar">
         <input type="search" placeholder="Search protein / UniProt / PDB / tag…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <label className="chk">
-          <input type="checkbox" checked={favOnly} onChange={(e) => setFavOnly(e.target.checked)} /> ★ only
+          <input type="checkbox" checked={favOnly} onChange={(e) => setFavOnly(e.target.checked)} /> Favorites only
         </label>
         <div className="spacer" />
         {selected.length === 2 && (
@@ -259,12 +260,12 @@ export function Dashboard({
                 </td>
                 <td className="fav-cell">
                   <button className={`star ${e.favorite ? "on" : ""}`} title={e.favorite ? "Unfavorite" : "Favorite"} onClick={() => void ws.toggleFavorite(e.id)}>
-                    {e.favorite ? "★" : "☆"}
+                    <Icon name="star" size={15} filled={e.favorite} />
                   </button>
                 </td>
                 <td>
                   <button className="link strong" onClick={() => onOpen(e)}>{e.proteinName}</button>
-                  <div className="muted small">{e.uniprot}{e.source === "upload" ? " · uploaded" : ""}{e.notes ? " · 📝" : ""}</div>
+                  <div className="muted small">{e.uniprot}{e.source === "upload" ? " · uploaded" : ""}{e.notes ? " · notes" : ""}</div>
                 </td>
                 <td>{e.pdbId}·{e.chain}</td>
                 <td>{e.rmsd.toFixed(2)}</td>
@@ -279,7 +280,7 @@ export function Dashboard({
                 </td>
                 <td className="muted small">{new Date(e.updatedAt).toLocaleDateString()}</td>
                 <td>
-                  <button className="link danger" onClick={() => void ws.remove(e.id)} title="Delete">✕</button>
+                  <button className="link danger" onClick={() => void ws.remove(e.id)} title="Delete"><Icon name="close" size={14} /></button>
                 </td>
               </tr>
             ))}

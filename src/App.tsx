@@ -20,6 +20,8 @@ import { SearchPanel } from "./search/SearchPanel.tsx";
 import { PaePanel } from "./components/PaePanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
+import { FoldView } from "./fold/FoldView.tsx";
+import { LearnView } from "./ui/LearnView.tsx";
 import { useWorkspace } from "./workspace/useWorkspace.ts";
 import type { StoredStructures, WorkspaceEntry } from "./workspace/types.ts";
 import { exportEntryXlsx, exportEntryCsv, exportEntryLog } from "./workspace/export.ts";
@@ -35,6 +37,7 @@ import { TopBar } from "./ui/TopBar.tsx";
 import { CommandPalette, type Command } from "./ui/CommandPalette.tsx";
 import { ShortcutsHelp } from "./ui/ShortcutsHelp.tsx";
 import { useToast } from "./ui/toast.tsx";
+import { Icon } from "./ui/Icon.tsx";
 import "./styles.css";
 
 const BREADCRUMBS: Record<string, string> = {
@@ -42,6 +45,8 @@ const BREADCRUMBS: Record<string, string> = {
   compare: "Compare",
   batch: "Batch",
   compare2: "Compare two",
+  fold: "Fold sequences",
+  learn: "Learn",
 };
 
 /** Build the StoredStructures-shaped object the viewer uses from a pipeline result. */
@@ -64,7 +69,7 @@ const MolstarViewer = lazy(() =>
 );
 
 type Status = "idle" | "loading" | "error" | "done";
-type View = "dashboard" | "compare" | "batch" | "compare2";
+type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn";
 
 interface Active {
   id: string;
@@ -89,6 +94,7 @@ export function App() {
   const [error, setError] = useState("");
   const [active, setActive] = useState<Active | null>(null);
   const [pair, setPair] = useState<[WorkspaceEntry, WorkspaceEntry] | null>(null);
+  const [pendingModel, setPendingModel] = useState<UploadedFile | null>(null);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("openfoldui-sidebar") === "collapsed");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -234,7 +240,7 @@ export function App() {
             title={theme === "dark" ? "Switch to light" : "Switch to dark"}
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
-            {theme === "dark" ? "☀" : "☾"}
+            <Icon name={theme === "dark" ? "sun" : "moon"} />
           </button>
         </TopBar>
 
@@ -281,7 +287,7 @@ export function App() {
               </div>
             </>
           ) : (
-            <UploadPanel onCompare={runUpload} busy={status === "loading"} />
+            <UploadPanel onCompare={runUpload} busy={status === "loading"} initialModel={pendingModel} />
           )}
 
           {status === "loading" && <p className="status">Fetching structures and computing…</p>}
@@ -320,6 +326,14 @@ export function App() {
       )}
 
       {view === "batch" && <BatchView ws={ws} onOpen={openEntry} />}
+
+      {view === "fold" && (
+        <FoldView
+          onUseModel={(f) => { setPendingModel(f); setCompareMode("upload"); setView("compare"); }}
+        />
+      )}
+
+      {view === "learn" && <LearnView />}
 
           <footer className="app-footer">
             <span className="muted">
@@ -397,7 +411,7 @@ function Results({
             onClick={onToggleFavorite}
             title={entry.favorite ? "Unfavorite" : "Favorite"}
           >
-            {entry.favorite ? "★" : "☆"}
+            <Icon name="star" size={20} filled={entry.favorite} />
           </button>
           {entry.proteinName} <span className="muted">({entry.uniprot})</span>
         </h2>
@@ -464,7 +478,7 @@ function Results({
       {entry.warnings.length > 0 && (
         <ul className="warnings">
           {entry.warnings.map((w) => (
-            <li key={w}>⚠ {w}</li>
+            <li key={w}><Icon name="alert" size={14} className="warn-icon" /> {w}</li>
           ))}
         </ul>
       )}

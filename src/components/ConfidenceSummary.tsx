@@ -75,7 +75,7 @@ export function ConfidenceSummary({ perResidue }: { perResidue: PerResidue[] }) 
 
       <h3>Confidently wrong residues {wrong.length > 0 ? `(${wrong.length})` : ""}</h3>
       {wrong.length === 0 ? (
-        <p className="muted">None — no high-confidence residue deviates by ≥ 3 Å. 🎉</p>
+        <p className="muted">None — no high-confidence residue deviates beyond the threshold.</p>
       ) : (
         <div className="datasheet-scroll" style={{ maxHeight: 240 }}>
           <table>

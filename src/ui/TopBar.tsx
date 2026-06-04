@@ -3,6 +3,7 @@
  * launcher (⌘K), settings, and the theme toggle.
  */
 import type { ReactNode } from "react";
+import { Icon } from "./Icon.tsx";
 
 export function TopBar({
   breadcrumb,
@@ -19,7 +20,7 @@ export function TopBar({
   const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
   return (
     <header className="topbar">
-      <button className="topbar-burger" title="Toggle sidebar" onClick={onToggleSidebar}>☰</button>
+      <button className="topbar-burger" title="Toggle sidebar" onClick={onToggleSidebar}><Icon name="menu" /></button>
       <div className="breadcrumb">
         <span className="muted">OpenFoldUI</span>
         <span className="crumb-sep">/</span>

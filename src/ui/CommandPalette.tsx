@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { WorkspaceEntry } from "../workspace/types.ts";
 import { fuzzyRank } from "./fuzzy.ts";
+import { Icon } from "./Icon.tsx";
 
 export interface Command {
   id: string;
@@ -106,13 +107,13 @@ export function CommandPalette({
             >
               {it.kind === "command" ? (
                 <>
-                  <span className="cmdk-icon">⚡</span>
+                  <span className="cmdk-icon"><Icon name="command" size={15} /></span>
                   <span className="cmdk-label">{it.command.label}</span>
                   {it.command.hint && <span className="cmdk-hint muted">{it.command.hint}</span>}
                 </>
               ) : (
                 <>
-                  <span className="cmdk-icon">{it.entry.favorite ? "★" : "🧬"}</span>
+                  <span className="cmdk-icon"><Icon name={it.entry.favorite ? "star" : "flask"} size={15} filled={it.entry.favorite} /></span>
                   <span className="cmdk-label">{it.entry.proteinName}</span>
                   <span className="cmdk-hint muted">
                     {it.entry.uniprot} · {it.entry.pdbId} · TM {it.entry.tmScore.toFixed(2)}

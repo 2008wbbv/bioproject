@@ -88,7 +88,7 @@ export function ValidationPanel({
           </table>
           <p className={agree ? "validate-ok" : "muted"}>
             {agree
-              ? "✓ Agrees with TM-align within tolerance."
+              ? "Agrees with TM-align within tolerance."
               : "Some difference is expected: TM-align iteratively re-superposes and may normalise TM-score by a different length (see SPEC §5)."}
           </p>
         </>

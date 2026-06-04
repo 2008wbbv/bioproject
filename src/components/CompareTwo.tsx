@@ -59,7 +59,7 @@ export function CompareTwo({
     <section className="compare-two">
       <div className="result-head">
         <h2>Compare two</h2>
-        <button onClick={onClose}>← Back to dashboard</button>
+        <button onClick={onClose}>Back to dashboard</button>
       </div>
 
       <table className="validate-table compare-table">

@@ -1,6 +1,7 @@
 /** A small popover to tune the analysis thresholds used across the app. */
 import { useState } from "react";
 import { useSettings } from "../settings.tsx";
+import { Icon } from "../ui/Icon.tsx";
 
 export function SettingsPanel() {
   const { settings, setSettings, reset } = useSettings();
@@ -14,7 +15,7 @@ export function SettingsPanel() {
   return (
     <div className="settings">
       <button className="theme-toggle" title="Analysis thresholds" onClick={() => setOpen((v) => !v)}>
-        ⚙
+        <Icon name="settings" />
       </button>
       {open && (
         <div className="settings-pop">

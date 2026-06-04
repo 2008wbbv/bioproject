@@ -4,8 +4,9 @@
  */
 import type { WorkspaceEntry } from "../workspace/types.ts";
 import { allTags } from "../workspace/stats.ts";
+import { Icon, type IconName } from "./Icon.tsx";
 
-export type View = "dashboard" | "compare" | "batch" | "compare2";
+export type View = "dashboard" | "compare" | "batch" | "compare2" | "fold" | "learn";
 
 export function Sidebar({
   view,
@@ -34,21 +35,23 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">🧬 OpenFoldUI</div>
+      <div className="sidebar-brand"><Icon name="flask" size={18} /> OpenFoldUI</div>
 
-      <button className="sidebar-new" onClick={onNewComparison}>＋ New comparison</button>
+      <button className="sidebar-new" onClick={onNewComparison}><Icon name="plus" size={15} /> New comparison</button>
 
       <nav className="sidebar-nav">
-        <NavItem icon="▦" label="Dashboard" active={view === "dashboard"} onClick={() => onNavigate("dashboard")} />
-        <NavItem icon="⊕" label="Compare" active={view === "compare"} onClick={() => onNavigate("compare")} />
-        <NavItem icon="≣" label="Batch" active={view === "batch"} onClick={() => onNavigate("batch")} />
+        <NavItem icon="grid" label="Dashboard" active={view === "dashboard"} onClick={() => onNavigate("dashboard")} />
+        <NavItem icon="layers" label="Compare" active={view === "compare"} onClick={() => onNavigate("compare")} />
+        <NavItem icon="list" label="Batch" active={view === "batch"} onClick={() => onNavigate("batch")} />
+        <NavItem icon="beaker" label="Fold sequence" active={view === "fold"} onClick={() => onNavigate("fold")} />
+        <NavItem icon="book" label="Learn" active={view === "learn"} onClick={() => onNavigate("learn")} />
       </nav>
 
       {favorites.length > 0 && (
         <Section title="Favorites">
           {favorites.map((e) => (
             <button key={e.id} className="sidebar-link" onClick={() => onOpenEntry(e)} title={e.proteinName}>
-              <span className="sidebar-star">★</span>
+              <span className="sidebar-star"><Icon name="star" size={13} filled /></span>
               <span className="sidebar-link-text">{e.proteinName}</span>
             </button>
           ))}
@@ -86,10 +89,10 @@ export function Sidebar({
   );
 }
 
-function NavItem({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) {
+function NavItem({ icon, label, active, onClick }: { icon: IconName; label: string; active: boolean; onClick: () => void }) {
   return (
     <button className={`sidebar-navitem ${active ? "on" : ""}`} onClick={onClick}>
-      <span className="sidebar-navicon">{icon}</span> {label}
+      <Icon name={icon} size={16} className="sidebar-navicon" /> {label}
     </button>
   );
 }
