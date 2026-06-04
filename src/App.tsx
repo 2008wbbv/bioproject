@@ -22,6 +22,7 @@ import { UploadPanel } from "./components/UploadPanel.tsx";
 import { SearchPanel } from "./search/SearchPanel.tsx";
 import { PaePanel } from "./components/PaePanel.tsx";
 import { DomainPanel } from "./components/DomainPanel.tsx";
+import { DdmPanel } from "./components/DdmPanel.tsx";
 import { FeatureTrack } from "./components/FeatureTrack.tsx";
 import { MultiStatePanel } from "./components/MultiStatePanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
@@ -681,6 +682,10 @@ function Results({
 
       {structures?.paeUrl && structures.matched && (
         <DomainPanel paeUrl={structures.paeUrl} matched={structures.matched} globalRmsd={entry.rmsd} />
+      )}
+
+      {structures?.matched && structures.matched.uniprotNums.length > 3 && (
+        <DdmPanel matched={structures.matched} />
       )}
 
       {structures?.paeUrl && <PaePanel paeUrl={structures.paeUrl} />}
