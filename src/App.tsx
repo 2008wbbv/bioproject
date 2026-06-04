@@ -20,6 +20,7 @@ import { SearchPanel } from "./search/SearchPanel.tsx";
 import { PaePanel } from "./components/PaePanel.tsx";
 import { DomainPanel } from "./components/DomainPanel.tsx";
 import { FeatureTrack } from "./components/FeatureTrack.tsx";
+import { MultiStatePanel } from "./components/MultiStatePanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { FoldView } from "./fold/FoldView.tsx";
@@ -614,6 +615,10 @@ function Results({
           nativeTm={entry.tmScore}
           nativeRmsd={entry.rmsd}
         />
+      )}
+
+      {alternatives && alternatives.length > 1 && (
+        <MultiStatePanel uniprot={entry.uniprot} alternatives={alternatives} />
       )}
 
       {structures?.paeUrl && structures.matched && (
