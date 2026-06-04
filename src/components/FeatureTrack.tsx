@@ -10,6 +10,7 @@ const LANES: Array<{ key: FeatureCategory; label: string; color: string }> = [
   { key: "domain", label: "Domains & regions", color: "#2563eb" },
   { key: "site", label: "Functional sites", color: "#dc2626" },
   { key: "modification", label: "Modifications", color: "#7c3aed" },
+  { key: "variant", label: "Variants", color: "#16a34a" },
 ];
 
 const WIDTH = 560;

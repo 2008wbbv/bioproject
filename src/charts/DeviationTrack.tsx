@@ -8,7 +8,13 @@ import * as Plot from "@observablehq/plot";
 import type { PerResidue } from "../engine/types.ts";
 import { PlotFigure } from "./PlotFigure.tsx";
 
-export function DeviationTrack({ perResidue }: { perResidue: PerResidue[] }) {
+export function DeviationTrack({
+  perResidue,
+  annotations = [],
+}: {
+  perResidue: PerResidue[];
+  annotations?: Array<{ residue: number; text: string }>;
+}) {
   const options = useMemo<Plot.PlotOptions>(() => {
     const sorted = [...perResidue].sort((a, b) => a.uniprotNum - b.uniprotNum);
     return {
@@ -36,9 +42,15 @@ export function DeviationTrack({ perResidue }: { perResidue: PerResidue[] }) {
           channels: { residue: "uniprotNum", plddt: "plddt" },
           tip: true,
         }),
+        ...(annotations.length
+          ? [
+              Plot.ruleX(annotations, { x: "residue", stroke: "#dc2626", strokeWidth: 1 }),
+              Plot.dot(annotations, { x: "residue", y: 0, fill: "#dc2626", r: 4, symbol: "triangle", channels: { note: "text" }, tip: true }),
+            ]
+          : []),
       ],
     };
-  }, [perResidue]);
+  }, [perResidue, annotations]);
 
   return (
     <figure className="chart">

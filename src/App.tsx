@@ -37,6 +37,7 @@ import { exportPaperBundle } from "./workspace/paper.ts";
 import { transformPdb } from "./engine/pdbTransform.ts";
 import { ValidationPanel } from "./components/ValidationPanel.tsx";
 import { TagEditor } from "./components/TagEditor.tsx";
+import { AnnotationEditor } from "./components/AnnotationEditor.tsx";
 import { SettingsPanel } from "./components/SettingsPanel.tsx";
 import { CompareTwo } from "./components/CompareTwo.tsx";
 import { useTheme } from "./useTheme.ts";
@@ -405,6 +406,7 @@ export function App() {
               onToggleFavorite={() => void ws.toggleFavorite(liveEntry.id)}
               onNotes={(n) => void ws.setNotes(liveEntry.id, n)}
               onTags={(t) => void ws.setTags(liveEntry.id, t)}
+              onAnnotations={(a) => void ws.setAnnotations(liveEntry.id, a)}
               onProject={(p) => void ws.setProject(liveEntry.id, p)}
               projectOptions={[...new Set(ws.entries.map((e) => e.project).filter((p): p is string => !!p))]}
               tagSuggestions={[...new Set(ws.entries.flatMap((e) => e.tags ?? []))]}
@@ -477,6 +479,7 @@ function Results({
   onToggleFavorite,
   onNotes,
   onTags,
+  onAnnotations,
   onProject,
   projectOptions,
   tagSuggestions,
@@ -489,6 +492,7 @@ function Results({
   onToggleFavorite: () => void;
   onNotes: (notes: string) => void;
   onTags: (tags: string[]) => void;
+  onAnnotations: (a: Array<{ residue: number; text: string }>) => void;
   onProject: (project: string) => void;
   projectOptions: string[];
   tagSuggestions: string[];
@@ -612,7 +616,7 @@ function Results({
 
       <div className="charts">
         <ScatterPlddtDeviation perResidue={entry.perResidue} spearman={entry.plddtErrorSpearman} />
-        <DeviationTrack perResidue={entry.perResidue} />
+        <DeviationTrack perResidue={entry.perResidue} annotations={entry.annotations ?? []} />
         <PlddtLddtScatter perResidue={entry.perResidue} />
         <BFactorScatter perResidue={entry.perResidue} />
       </div>
@@ -648,6 +652,7 @@ function Results({
         <datalist id="ofu-projects">{projectOptions.map((p) => <option key={p} value={p} />)}</datalist>
       </div>
       <TagEditor tags={entry.tags ?? []} onChange={onTags} suggestions={tagSuggestions} />
+      <AnnotationEditor annotations={entry.annotations ?? []} onChange={onAnnotations} />
       <NotesEditor value={entry.notes} onSave={onNotes} />
 
       <div className="sheet-toggle">

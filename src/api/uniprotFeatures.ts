@@ -57,6 +57,7 @@ const FIELDS = [
   "ft_domain", "ft_region", "ft_motif", "ft_dna_bind", "ft_zn_fing",
   "ft_act_site", "ft_binding", "ft_site",
   "ft_mod_res", "ft_carbohyd", "ft_disulfid", "ft_lipid",
+  "ft_variant", "ft_mutagen",
 ].join(",");
 
 export async function fetchUniprotFeatures(accession: string): Promise<Feature[]> {

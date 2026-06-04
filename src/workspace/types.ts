@@ -45,6 +45,8 @@ export interface WorkspaceEntry {
   tags?: string[];
   /** Optional single-value collection/project grouping. */
   project?: string;
+  /** Pinned residues with a note. */
+  annotations?: Array<{ residue: number; text: string }>;
 
   // Summary metrics (for the dashboard table + export).
   rmsd: number;

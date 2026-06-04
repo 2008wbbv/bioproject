@@ -51,6 +51,11 @@ export function parseWorkspace(text: string): WorkspaceEntry[] {
       notes: asStr(e.notes),
       tags: Array.isArray(e.tags) ? e.tags.filter((t): t is string => typeof t === "string") : undefined,
       project: typeof e.project === "string" ? e.project : undefined,
+      annotations: Array.isArray(e.annotations)
+        ? (e.annotations as Record<string, unknown>[])
+            .filter((a) => typeof a.residue === "number" && typeof a.text === "string")
+            .map((a) => ({ residue: a.residue as number, text: a.text as string }))
+        : undefined,
       rmsd: asNum(e.rmsd),
       tmScore: asNum(e.tmScore),
       gdtTs: asNum(e.gdtTs),
