@@ -1363,3 +1363,8 @@ th svg { margin-left: 0.2rem; opacity: 0.7; }
 .faceoff-panel { margin-top: 1.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
 .faceoff-panel .search-head button { padding: 0.45rem 0.9rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
 .faceoff-win { font-weight: 700; color: #15803d; }
+
+.multichain-panel { margin-top: 1.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+.multichain-panel .search-head button { padding: 0.45rem 0.9rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+.multichain-panel table { margin-top: 0.75rem; }
+.multichain-panel p { margin-top: 0.6rem; }

@@ -26,6 +26,7 @@ import { DdmPanel } from "./components/DdmPanel.tsx";
 import { FeatureTrack } from "./components/FeatureTrack.tsx";
 import { MultiStatePanel } from "./components/MultiStatePanel.tsx";
 import { FaceoffPanel } from "./components/FaceoffPanel.tsx";
+import { MultiChainPanel } from "./components/MultiChainPanel.tsx";
 import { Dashboard } from "./workspace/Dashboard.tsx";
 import { BatchView } from "./batch/BatchView.tsx";
 import { FoldView } from "./fold/FoldView.tsx";
@@ -755,6 +756,16 @@ function Results({
           refText={structures.refText}
           refFormat={structures.refFormat}
           af={{ rmsd: entry.rmsd, tmScore: entry.tmScore, gdtTs: entry.gdtTs, lddt: entry.lddt ?? 0, nMatched: entry.nMatched }}
+        />
+      )}
+
+      {structures && entry.source === "database" && (
+        <MultiChainPanel
+          uniprot={entry.uniprot}
+          modelText={structures.modelText}
+          modelFormat={structures.modelFormat}
+          refText={structures.refText}
+          refFormat={structures.refFormat}
         />
       )}
 
