@@ -125,3 +125,11 @@ with TM-align.
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<div align="center">
+
+Made by **Ben Vaccaro**
+
+</div>
